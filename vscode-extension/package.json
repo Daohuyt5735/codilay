@@ -1,0 +1,115 @@
+{
+  "name": "codilay",
+  "displayName": "CodiLay",
+  "description": "AI-powered codebase documentation inline in your editor",
+  "version": "0.1.0",
+  "publisher": "codilay",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "documentation",
+    "ai",
+    "codebase",
+    "codilay"
+  ],
+  "activationEvents": [
+    "workspaceContains:codilay/CODEBASE.md"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "codilay.showDocPanel",
+        "title": "CodiLay: Show Documentation Panel"
+      },
+      {
+        "command": "codilay.showFileDoc",
+        "title": "CodiLay: Show Documentation for Current File"
+      },
+      {
+        "command": "codilay.askQuestion",
+        "title": "CodiLay: Ask a Question About This Code"
+      },
+      {
+        "command": "codilay.showGraph",
+        "title": "CodiLay: Show Dependency Graph"
+      },
+      {
+        "command": "codilay.searchConversations",
+        "title": "CodiLay: Search Past Conversations"
+      },
+      {
+        "command": "codilay.refresh",
+        "title": "CodiLay: Refresh Documentation"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "codilay",
+          "title": "CodiLay",
+          "icon": "$(book)"
+        }
+      ]
+    },
+    "views": {
+      "codilay": [
+        {
+          "id": "codilay.sections",
+          "name": "Documentation Sections"
+        },
+        {
+          "id": "codilay.wires",
+          "name": "Dependencies"
+        },
+        {
+          "id": "codilay.team",
+          "name": "Team Knowledge"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "CodiLay",
+      "properties": {
+        "codilay.serverUrl": {
+          "type": "string",
+          "default": "http://127.0.0.1:8484",
+          "description": "URL of the running CodiLay server"
+        },
+        "codilay.autoConnect": {
+          "type": "boolean",
+          "default": true,
+          "description": "Auto-connect to CodiLay server when workspace has docs"
+        },
+        "codilay.inlineHints": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show inline documentation hints in the editor"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.3.0",
+    "eslint": "^8.54.0",
+    "@typescript-eslint/eslint-plugin": "^6.12.0",
+    "@typescript-eslint/parser": "^6.12.0"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  }
+}

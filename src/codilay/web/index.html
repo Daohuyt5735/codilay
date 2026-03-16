@@ -1249,6 +1249,459 @@
       background: transparent;
       padding: 0;
     }
+
+    /* ── Tools panel ─────────────────────────────────── */
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 20px;
+    }
+
+    .tool-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 24px;
+      transition: all 0.15s;
+    }
+
+    .tool-card:hover {
+      border-color: var(--border-focus);
+      box-shadow: var(--shadow-md);
+    }
+
+    .tool-card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .tool-card-header .tool-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .tool-card-header h3 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .tool-card p {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+
+    .tool-card-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .tool-btn {
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .tool-btn:hover {
+      background: var(--bg-tertiary);
+      border-color: var(--border-focus);
+    }
+
+    .tool-btn.primary {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .tool-btn.primary:hover {
+      background: var(--accent-hover);
+    }
+
+    /* ── Search results ──────────────────────────────── */
+    .search-panel {
+      max-width: 800px;
+    }
+
+    .search-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .search-bar input {
+      flex: 1;
+      padding: 10px 14px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+    }
+
+    .search-bar input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent);
+    }
+
+    .search-result {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .search-result:hover {
+      border-color: var(--border-focus);
+      background: var(--bg-tertiary);
+    }
+
+    .search-result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .search-result-conv {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--accent);
+    }
+
+    .search-result-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      display: flex;
+      gap: 8px;
+    }
+
+    .search-result-content {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .search-result-content mark {
+      background: rgba(59, 130, 246, 0.2);
+      color: var(--text);
+      padding: 1px 3px;
+      border-radius: 2px;
+    }
+
+    .search-score {
+      font-size: 10px;
+      padding: 2px 6px;
+      background: var(--bg-tertiary);
+      border-radius: 4px;
+      color: var(--text-muted);
+    }
+
+    /* ── Doc diff view ───────────────────────────────── */
+    .diff-container {
+      max-width: 800px;
+    }
+
+    .diff-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .diff-select {
+      padding: 8px 12px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+    }
+
+    .diff-section {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+
+    .diff-section-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .diff-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .diff-badge.added {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--green);
+    }
+
+    .diff-badge.removed {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--red);
+    }
+
+    .diff-badge.modified {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--orange);
+    }
+
+    .diff-section-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .diff-section-body {
+      padding: 16px;
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .diff-line-added {
+      background: rgba(34, 197, 94, 0.08);
+      color: var(--green);
+      padding: 2px 4px;
+      display: block;
+    }
+
+    .diff-line-removed {
+      background: rgba(239, 68, 68, 0.08);
+      color: var(--red);
+      padding: 2px 4px;
+      display: block;
+      text-decoration: line-through;
+    }
+
+    /* ── Team memory view ────────────────────────────── */
+    .team-container {
+      max-width: 800px;
+    }
+
+    .team-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 20px;
+      background: var(--bg-secondary);
+      padding: 4px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      width: fit-content;
+    }
+
+    .team-tab {
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      background: transparent;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .team-tab:hover {
+      color: var(--text);
+    }
+
+    .team-tab.active {
+      color: var(--text);
+      background: var(--bg);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .team-item {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 10px;
+    }
+
+    .team-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+
+    .team-item-content {
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .team-item-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 8px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .vote-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 8px;
+      cursor: pointer;
+      font-size: 11px;
+      color: var(--text-muted);
+      transition: all 0.15s;
+    }
+
+    .vote-btn:hover {
+      color: var(--green);
+      border-color: var(--green);
+    }
+
+    /* ── Graph filter bar ────────────────────────────── */
+    .graph-filter-bar {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 12px;
+      max-width: 260px;
+    }
+
+    .graph-filter-bar label {
+      color: var(--text-muted);
+      font-weight: 500;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .graph-filter-bar select {
+      padding: 4px 8px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      font-size: 12px;
+      outline: none;
+    }
+
+    /* ── Triage feedback ─────────────────────────────── */
+    .triage-item {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .triage-item-file {
+      font-size: 13px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      color: var(--text);
+    }
+
+    .triage-item-action {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    .triage-item-action.include {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--green);
+    }
+
+    .triage-item-action.exclude {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--red);
+    }
+
+    .triage-delete-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      transition: all 0.15s;
+    }
+
+    .triage-delete-btn:hover {
+      color: var(--red);
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    /* ── Empty state ─────────────────────────────────── */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-state .empty-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.3;
+    }
+
+    .empty-state h3 {
+      font-size: 16px;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .empty-state p {
+      font-size: 13px;
+      max-width: 400px;
+      margin: 0 auto;
+      line-height: 1.5;
+    }
   </style>
 </head>
 
@@ -1291,7 +1744,11 @@
       <div class="main-header">
         <div class="view-tabs">
           <button class="view-tab active" data-view="document"><i data-lucide="file-text"></i> Document</button>
-          <button class="view-tab" data-view="graph"><i data-lucide="network"></i> Dependency Graph</button>
+          <button class="view-tab" data-view="graph"><i data-lucide="network"></i> Graph</button>
+          <button class="view-tab" data-view="diff"><i data-lucide="git-compare"></i> Doc Diff</button>
+          <button class="view-tab" data-view="search"><i data-lucide="search"></i> Search</button>
+          <button class="view-tab" data-view="team"><i data-lucide="users"></i> Team</button>
+          <button class="view-tab" data-view="tools"><i data-lucide="wrench"></i> Tools</button>
         </div>
       </div>
       <div class="main-content" id="main-content">
@@ -1534,6 +1991,20 @@
       const container = document.getElementById('main-content');
       container.innerHTML = `
         <div class="graph-container" id="graph-container" style="position:relative; width: 100%; height: 100%; min-height: 500px;">
+          <div class="graph-filter-bar" id="graph-filter-bar">
+            <strong style="color:var(--text); font-size:12px;">Filters</strong>
+            <label>Wire Type</label>
+            <select id="gf-wire-type"><option value="">All</option></select>
+            <label>Layer</label>
+            <select id="gf-layer"><option value="">All</option></select>
+            <label>Module</label>
+            <select id="gf-module"><option value="">All</option></select>
+            <label>Min Connections</label>
+            <input id="gf-min-conn" type="number" min="0" value="0"
+              style="padding:4px 8px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px;width:60px;">
+            <button class="tool-btn primary" onclick="applyGraphFilters()" style="margin-top:4px;justify-content:center;">Apply</button>
+            <button class="tool-btn" onclick="resetGraphFilters()" style="justify-content:center;">Reset</button>
+          </div>
           <div style="position: absolute; top: 12px; right: 12px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; font-size: 11px;">
             <div style="display: flex; align-items: center; gap: 6px; margin: 4px 0; color: var(--text-muted);">
               <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent);"></div> Source file
@@ -1544,10 +2015,94 @@
             <div style="display: flex; align-items: center; gap: 6px; margin: 4px 0; color: var(--text-muted);">
               <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--orange);"></div> Open wire
             </div>
+            <div id="gf-stats" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);color:var(--text-muted);display:none;"></div>
           </div>
         </div>
       `;
 
+      loadGraphFilters();
+      buildGraph();
+    }
+
+    async function loadGraphFilters() {
+      try {
+        const res = await fetch('/api/graph/filters');
+        if (!res.ok) return;
+        const data = await res.json();
+        const wireTypeSel = document.getElementById('gf-wire-type');
+        const layerSel = document.getElementById('gf-layer');
+        const moduleSel = document.getElementById('gf-module');
+        (data.wire_types || []).forEach(t => {
+          wireTypeSel.innerHTML += `<option value="${escHtml(t)}">${escHtml(t)}</option>`;
+        });
+        (data.layers || []).forEach(l => {
+          layerSel.innerHTML += `<option value="${escHtml(l)}">${escHtml(l)}</option>`;
+        });
+        (data.modules || []).forEach(m => {
+          moduleSel.innerHTML += `<option value="${escHtml(m)}">${escHtml(m)}</option>`;
+        });
+      } catch (e) { /* filters unavailable, no-op */ }
+    }
+
+    async function applyGraphFilters() {
+      const wireType = document.getElementById('gf-wire-type').value;
+      const layer = document.getElementById('gf-layer').value;
+      const module = document.getElementById('gf-module').value;
+      const minConn = parseInt(document.getElementById('gf-min-conn').value) || 0;
+
+      const body = {
+        wire_types: wireType ? [wireType] : null,
+        layers: layer ? [layer] : null,
+        modules: module ? [module] : null,
+        min_connections: minConn,
+        direction: 'both',
+      };
+
+      try {
+        const res = await fetch('/api/graph/filter', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+
+        // Rebuild graph with filtered data
+        const graphContainer = document.getElementById('graph-container');
+        const svg = graphContainer.querySelector('svg');
+        if (svg) svg.remove();
+
+        const filteredLinks = { closed: [], open: [] };
+        (data.edges || []).forEach(e => {
+          const wire = { from: e.source, to: e.target, type: e.type };
+          if (e.type === 'open') filteredLinks.open.push(wire);
+          else filteredLinks.closed.push(wire);
+        });
+
+        // Temporarily swap links for buildGraph
+        const origLinks = links;
+        links = filteredLinks;
+        buildGraph();
+        links = origLinks;
+
+        // Show filter stats
+        const statsEl = document.getElementById('gf-stats');
+        if (statsEl && data.stats) {
+          statsEl.style.display = 'block';
+          statsEl.innerHTML = `Showing ${data.stats.filtered_wires} of ${data.stats.total_wires} wires<br>${data.stats.nodes} nodes`;
+        }
+      } catch (e) { console.error('Graph filter error:', e); }
+    }
+
+    function resetGraphFilters() {
+      document.getElementById('gf-wire-type').value = '';
+      document.getElementById('gf-layer').value = '';
+      document.getElementById('gf-module').value = '';
+      document.getElementById('gf-min-conn').value = '0';
+      const statsEl = document.getElementById('gf-stats');
+      if (statsEl) statsEl.style.display = 'none';
+      const svg = document.getElementById('graph-container').querySelector('svg');
+      if (svg) svg.remove();
       buildGraph();
     }
 
@@ -1655,6 +2210,807 @@
       });
     }
 
+    // ── Doc Diff view ────────────────────────────────────────────────────────────
+    let diffSnapshots = [];
+
+    async function renderDiffView() {
+      const container = document.getElementById('main-content');
+      container.innerHTML = `
+        <div style="padding: 32px;" class="diff-container">
+          <div class="diff-header">
+            <h2 style="font-size:18px;font-weight:600;">Documentation Diff</h2>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <select class="diff-select" id="diff-snap1"></select>
+              <span style="color:var(--text-muted);">vs</span>
+              <select class="diff-select" id="diff-snap2"></select>
+              <button class="tool-btn primary" onclick="loadDiff()">Compare</button>
+            </div>
+          </div>
+          <div id="diff-results">
+            <div class="loading" style="color:var(--text-muted);">Loading snapshots...</div>
+          </div>
+        </div>
+      `;
+
+      try {
+        const res = await fetch('/api/doc-diff/snapshots');
+        if (!res.ok) throw new Error('Failed to load snapshots');
+        const data = await res.json();
+        diffSnapshots = data.snapshots || [];
+
+        if (diffSnapshots.length < 2) {
+          document.getElementById('diff-results').innerHTML = `
+            <div class="empty-state">
+              <div class="empty-icon"><i data-lucide="git-compare"></i></div>
+              <h3>Not enough snapshots</h3>
+              <p>Run CodiLay at least twice to see documentation changes between versions.</p>
+              <p style="margin-top:8px;font-size:12px;">Snapshots found: ${diffSnapshots.length}</p>
+            </div>`;
+          updateIcons();
+          return;
+        }
+
+        const sel1 = document.getElementById('diff-snap1');
+        const sel2 = document.getElementById('diff-snap2');
+        diffSnapshots.forEach((s, i) => {
+          const label = s.replace(/\.json$/, '');
+          sel1.innerHTML += `<option value="${escHtml(s)}" ${i === diffSnapshots.length - 2 ? 'selected' : ''}>${escHtml(label)}</option>`;
+          sel2.innerHTML += `<option value="${escHtml(s)}" ${i === diffSnapshots.length - 1 ? 'selected' : ''}>${escHtml(label)}</option>`;
+        });
+
+        // Auto-load latest diff
+        await loadDiff();
+      } catch (e) {
+        document.getElementById('diff-results').innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon"><i data-lucide="alert-circle"></i></div>
+            <h3>Could not load diff</h3>
+            <p>${escHtml(e.message)}</p>
+          </div>`;
+        updateIcons();
+      }
+    }
+
+    async function loadDiff() {
+      const resultsEl = document.getElementById('diff-results');
+      resultsEl.innerHTML = '<div class="loading" style="color:var(--text-muted);">Computing diff...</div>';
+
+      try {
+        const res = await fetch('/api/doc-diff');
+        if (!res.ok) throw new Error('Diff computation failed');
+        const data = await res.json();
+
+        if (data.has_changes === false) {
+          resultsEl.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-icon"><i data-lucide="check-circle"></i></div>
+              <h3>No changes detected</h3>
+              <p>${data.message || 'The documentation is identical between these snapshots.'}</p>
+            </div>`;
+          updateIcons();
+          return;
+        }
+
+        let html = '';
+
+        // Time range
+        if (data.old_run_time || data.new_run_time) {
+          html += `<div style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">
+            ${data.old_run_time || '?'} &rarr; ${data.new_run_time || '?'}
+          </div>`;
+        }
+
+        // Stats delta
+        if (data.stats_delta) {
+          const fd = data.stats_delta.files_processed;
+          const sd = data.stats_delta.sections;
+          if (fd !== 0 || sd !== 0) {
+            html += `<div style="display:flex;gap:16px;margin-bottom:20px;">`;
+            if (fd !== 0) html += `<div class="diff-badge ${fd > 0 ? 'added' : 'removed'}">${fd > 0 ? '+' : ''}${fd} files</div>`;
+            if (sd !== 0) html += `<div class="diff-badge ${sd > 0 ? 'added' : 'removed'}">${sd > 0 ? '+' : ''}${sd} sections</div>`;
+            html += `</div>`;
+          }
+        }
+
+        // Wire changes
+        const wc = data.wire_changes || {};
+        if (wc.new_closed || wc.lost_closed || wc.new_open || wc.resolved_open) {
+          html += `<div class="diff-section"><div class="diff-section-header">
+            <span class="diff-badge modified">wires</span>
+            <span class="diff-section-title">Wire Changes</span>
+          </div><div class="diff-section-body">`;
+          if (wc.new_closed) html += `<span class="diff-line-added">+${wc.new_closed} newly closed wires</span>`;
+          if (wc.lost_closed) html += `<span class="diff-line-removed">-${wc.lost_closed} lost closed wires</span>`;
+          if (wc.new_open) html += `<span class="diff-line-removed">+${wc.new_open} new open wires</span>`;
+          if (wc.resolved_open) html += `<span class="diff-line-added">${wc.resolved_open} open wires resolved</span>`;
+          html += `</div></div>`;
+        }
+
+        // Added sections
+        (data.added_sections || []).forEach(s => {
+          html += `<div class="diff-section">
+            <div class="diff-section-header">
+              <span class="diff-badge added">added</span>
+              <span class="diff-section-title">${escHtml(s.title)}</span>
+            </div>
+            <div class="diff-section-body">${escHtml(s.summary || 'New section added')}</div>
+          </div>`;
+        });
+
+        // Removed sections
+        (data.removed_sections || []).forEach(s => {
+          html += `<div class="diff-section">
+            <div class="diff-section-header">
+              <span class="diff-badge removed">removed</span>
+              <span class="diff-section-title">${escHtml(s.title)}</span>
+            </div>
+          </div>`;
+        });
+
+        // Modified sections
+        (data.modified_sections || []).forEach(s => {
+          html += `<div class="diff-section">
+            <div class="diff-section-header">
+              <span class="diff-badge modified">modified</span>
+              <span class="diff-section-title">${escHtml(s.title)}</span>
+            </div>
+            <div class="diff-section-body">
+              ${s.summary ? `<p style="margin-bottom:8px;">${escHtml(s.summary)}</p>` : ''}
+              ${(s.diff || []).map(line => {
+                if (line.startsWith('+')) return `<span class="diff-line-added">${escHtml(line)}</span>`;
+                if (line.startsWith('-')) return `<span class="diff-line-removed">${escHtml(line)}</span>`;
+                return `<span style="display:block;color:var(--text-muted);">${escHtml(line)}</span>`;
+              }).join('')}
+            </div>
+          </div>`;
+        });
+
+        if (!html) {
+          html = `<div class="empty-state">
+            <div class="empty-icon"><i data-lucide="check-circle"></i></div>
+            <h3>No changes</h3>
+            <p>Documentation is identical between these snapshots.</p>
+          </div>`;
+        }
+
+        resultsEl.innerHTML = html;
+        updateIcons();
+      } catch (e) {
+        resultsEl.innerHTML = `<div style="color:var(--red);padding:20px;">Error: ${escHtml(e.message)}</div>`;
+      }
+    }
+
+    // ── Search view ──────────────────────────────────────────────────────────────
+    let searchDebounce = null;
+
+    async function renderSearchView() {
+      const container = document.getElementById('main-content');
+      container.innerHTML = `
+        <div style="padding: 32px;" class="search-panel">
+          <h2 style="font-size:18px;font-weight:600;margin-bottom:20px;">Conversation Search</h2>
+          <div class="search-bar">
+            <input type="text" id="conv-search-input" placeholder="Search across all conversations..."
+              onkeyup="handleSearchKeyup(event)">
+            <select id="conv-search-role" style="padding:10px 12px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;">
+              <option value="">All roles</option>
+              <option value="user">User only</option>
+              <option value="assistant">Assistant only</option>
+            </select>
+            <button class="tool-btn primary" onclick="runConvSearch()">Search</button>
+          </div>
+          <div id="conv-search-meta" style="font-size:12px;color:var(--text-muted);margin-bottom:16px;display:none;"></div>
+          <div id="conv-search-results">
+            <div class="empty-state">
+              <div class="empty-icon"><i data-lucide="search"></i></div>
+              <h3>Search conversations</h3>
+              <p>Enter a query to search across all past chat conversations.</p>
+            </div>
+          </div>
+          <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border);">
+            <button class="tool-btn" onclick="rebuildSearchIndex()">
+              <i data-lucide="refresh-cw" style="width:14px;height:14px;"></i> Rebuild Index
+            </button>
+          </div>
+        </div>
+      `;
+      updateIcons();
+    }
+
+    function handleSearchKeyup(e) {
+      if (e.key === 'Enter') {
+        runConvSearch();
+        return;
+      }
+      clearTimeout(searchDebounce);
+      searchDebounce = setTimeout(() => {
+        const q = document.getElementById('conv-search-input').value.trim();
+        if (q.length >= 3) runConvSearch();
+      }, 500);
+    }
+
+    async function runConvSearch() {
+      const q = document.getElementById('conv-search-input').value.trim();
+      if (!q) return;
+      const role = document.getElementById('conv-search-role').value;
+      const resultsEl = document.getElementById('conv-search-results');
+      const metaEl = document.getElementById('conv-search-meta');
+      resultsEl.innerHTML = '<div class="loading" style="color:var(--text-muted);">Searching...</div>';
+
+      try {
+        let url = `/api/search?q=${encodeURIComponent(q)}&top_k=30`;
+        if (role) url += `&role=${encodeURIComponent(role)}`;
+
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Search failed');
+        const data = await res.json();
+
+        metaEl.style.display = 'block';
+        metaEl.textContent = `${data.total_results || 0} results across ${data.total_conversations_searched || 0} conversations (${data.total_messages_searched || 0} messages indexed)`;
+
+        if (!data.results || data.results.length === 0) {
+          resultsEl.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-icon"><i data-lucide="search-x"></i></div>
+              <h3>No results</h3>
+              <p>No messages matched "${escHtml(q)}". Try different keywords.</p>
+            </div>`;
+          updateIcons();
+          return;
+        }
+
+        resultsEl.innerHTML = data.results.map(r => `
+          <div class="search-result" onclick="searchResultClick('${escAttr(r.conversation_id)}')">
+            <div class="search-result-header">
+              <span class="search-result-conv">${escHtml(r.conversation_title || r.conversation_id)}</span>
+              <div class="search-result-meta">
+                <span style="text-transform:capitalize;">${escHtml(r.role)}</span>
+                ${r.created_at ? `<span>${escHtml(r.created_at)}</span>` : ''}
+                <span class="search-score">${r.score.toFixed(3)}</span>
+              </div>
+            </div>
+            <div class="search-result-content">${r.snippet || escHtml((r.content || '').slice(0, 200))}</div>
+          </div>
+        `).join('');
+        updateIcons();
+      } catch (e) {
+        resultsEl.innerHTML = `<div style="color:var(--red);padding:20px;">Error: ${escHtml(e.message)}</div>`;
+      }
+    }
+
+    function searchResultClick(convId) {
+      // Switch to chat and load that conversation if possible
+      const chatInput = document.getElementById('chat-input');
+      if (chatInput) {
+        addChatMsg(`Viewing conversation: ${convId}`, 'bot');
+      }
+    }
+
+    async function rebuildSearchIndex() {
+      try {
+        const res = await fetch('/api/search/rebuild', { method: 'POST' });
+        if (res.ok) {
+          addChatMsg('Search index rebuilt successfully.', 'bot');
+        }
+      } catch (e) { console.error('Rebuild failed:', e); }
+    }
+
+    // ── Team memory view ─────────────────────────────────────────────────────────
+    let teamTab = 'facts';
+
+    async function renderTeamView() {
+      const container = document.getElementById('main-content');
+      container.innerHTML = `
+        <div style="padding: 32px;" class="team-container">
+          <h2 style="font-size:18px;font-weight:600;margin-bottom:20px;">Team Knowledge Base</h2>
+          <div class="team-tabs">
+            <button class="team-tab ${teamTab === 'facts' ? 'active' : ''}" onclick="switchTeamTab('facts')">Facts</button>
+            <button class="team-tab ${teamTab === 'decisions' ? 'active' : ''}" onclick="switchTeamTab('decisions')">Decisions</button>
+            <button class="team-tab ${teamTab === 'conventions' ? 'active' : ''}" onclick="switchTeamTab('conventions')">Conventions</button>
+            <button class="team-tab ${teamTab === 'annotations' ? 'active' : ''}" onclick="switchTeamTab('annotations')">Annotations</button>
+            <button class="team-tab ${teamTab === 'users' ? 'active' : ''}" onclick="switchTeamTab('users')">Users</button>
+          </div>
+          <div id="team-content">
+            <div class="loading" style="color:var(--text-muted);">Loading...</div>
+          </div>
+        </div>
+      `;
+      await loadTeamTab();
+    }
+
+    function switchTeamTab(tab) {
+      teamTab = tab;
+      document.querySelectorAll('.team-tab').forEach(t => {
+        t.classList.toggle('active', t.textContent.toLowerCase() === tab);
+      });
+      loadTeamTab();
+    }
+
+    async function loadTeamTab() {
+      const el = document.getElementById('team-content');
+      if (!el) return;
+      el.innerHTML = '<div class="loading" style="color:var(--text-muted);">Loading...</div>';
+
+      try {
+        if (teamTab === 'facts') await renderTeamFacts(el);
+        else if (teamTab === 'decisions') await renderTeamDecisions(el);
+        else if (teamTab === 'conventions') await renderTeamConventions(el);
+        else if (teamTab === 'annotations') await renderTeamAnnotations(el);
+        else if (teamTab === 'users') await renderTeamUsers(el);
+      } catch (e) {
+        el.innerHTML = `<div style="color:var(--red);padding:20px;">Error: ${escHtml(e.message)}</div>`;
+      }
+      updateIcons();
+    }
+
+    async function renderTeamFacts(el) {
+      const res = await fetch('/api/team/facts');
+      const data = await res.json();
+      const facts = data.facts || [];
+
+      let html = `<div style="margin-bottom:16px;">
+        <button class="tool-btn primary" onclick="teamAddFact()"><i data-lucide="plus" style="width:14px;height:14px;"></i> Add Fact</button>
+      </div>`;
+
+      if (facts.length === 0) {
+        html += `<div class="empty-state">
+          <div class="empty-icon"><i data-lucide="lightbulb"></i></div>
+          <h3>No facts yet</h3>
+          <p>Add team knowledge that should be shared across all members.</p>
+        </div>`;
+      } else {
+        facts.forEach(f => {
+          html += `<div class="team-item">
+            <div class="team-item-header">
+              <span style="font-size:11px;padding:2px 8px;background:var(--accent-dim);color:var(--accent);border-radius:4px;">${escHtml(f.category || 'general')}</span>
+              <div style="display:flex;gap:4px;">
+                <button class="vote-btn" onclick="teamVoteFact('${escAttr(f.id)}', 'up')">+${f.upvotes || 0}</button>
+                <button class="vote-btn" onclick="teamVoteFact('${escAttr(f.id)}', 'down')">-${f.downvotes || 0}</button>
+                <button class="triage-delete-btn" onclick="teamDeleteFact('${escAttr(f.id)}')"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button>
+              </div>
+            </div>
+            <div class="team-item-content">${escHtml(f.fact)}</div>
+            <div class="team-item-meta">
+              ${f.author ? `<span>by ${escHtml(f.author)}</span>` : ''}
+              ${f.created_at ? `<span>${escHtml(f.created_at)}</span>` : ''}
+              ${(f.tags || []).length > 0 ? `<span>${f.tags.map(t => `#${escHtml(t)}`).join(' ')}</span>` : ''}
+            </div>
+          </div>`;
+        });
+      }
+      el.innerHTML = html;
+    }
+
+    async function teamAddFact() {
+      const fact = prompt('Enter the fact:');
+      if (!fact) return;
+      const category = prompt('Category (general, architecture, convention, gotcha):', 'general') || 'general';
+      const author = prompt('Your name (optional):', '') || '';
+      try {
+        await fetch('/api/team/facts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fact, category, author }),
+        });
+        await loadTeamTab();
+      } catch (e) { console.error(e); }
+    }
+
+    async function teamVoteFact(id, vote) {
+      try {
+        await fetch(`/api/team/facts/${encodeURIComponent(id)}/vote?vote=${vote}`, { method: 'POST' });
+        await loadTeamTab();
+      } catch (e) { console.error(e); }
+    }
+
+    async function teamDeleteFact(id) {
+      if (!confirm('Delete this fact?')) return;
+      try {
+        await fetch(`/api/team/facts/${encodeURIComponent(id)}`, { method: 'DELETE' });
+        await loadTeamTab();
+      } catch (e) { console.error(e); }
+    }
+
+    async function renderTeamDecisions(el) {
+      const res = await fetch('/api/team/decisions');
+      const data = await res.json();
+      const decisions = data.decisions || [];
+
+      let html = `<div style="margin-bottom:16px;">
+        <button class="tool-btn primary" onclick="teamAddDecision()"><i data-lucide="plus" style="width:14px;height:14px;"></i> Add Decision</button>
+      </div>`;
+
+      if (decisions.length === 0) {
+        html += `<div class="empty-state">
+          <div class="empty-icon"><i data-lucide="gavel"></i></div>
+          <h3>No decisions recorded</h3>
+          <p>Document architectural and design decisions for the team.</p>
+        </div>`;
+      } else {
+        decisions.forEach(d => {
+          const statusColor = d.status === 'accepted' ? 'var(--green)' : d.status === 'rejected' ? 'var(--red)' : 'var(--orange)';
+          html += `<div class="team-item">
+            <div class="team-item-header">
+              <span class="diff-section-title">${escHtml(d.title)}</span>
+              <span style="font-size:11px;padding:2px 8px;border-radius:4px;background:${statusColor}20;color:${statusColor};">${escHtml(d.status || 'proposed')}</span>
+            </div>
+            <div class="team-item-content">${escHtml(d.description)}</div>
+            <div class="team-item-meta">
+              ${d.author ? `<span>by ${escHtml(d.author)}</span>` : ''}
+              ${d.created_at ? `<span>${escHtml(d.created_at)}</span>` : ''}
+              ${(d.related_files || []).length > 0 ? `<span>${d.related_files.map(f => escHtml(f)).join(', ')}</span>` : ''}
+            </div>
+          </div>`;
+        });
+      }
+      el.innerHTML = html;
+    }
+
+    async function teamAddDecision() {
+      const title = prompt('Decision title:');
+      if (!title) return;
+      const description = prompt('Description:');
+      if (!description) return;
+      const author = prompt('Your name (optional):', '') || '';
+      try {
+        await fetch('/api/team/decisions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, description, author }),
+        });
+        await loadTeamTab();
+      } catch (e) { console.error(e); }
+    }
+
+    async function renderTeamConventions(el) {
+      const res = await fetch('/api/team/conventions');
+      const data = await res.json();
+      const conventions = data.conventions || [];
+
+      let html = `<div style="margin-bottom:16px;">
+        <button class="tool-btn primary" onclick="teamAddConvention()"><i data-lucide="plus" style="width:14px;height:14px;"></i> Add Convention</button>
+      </div>`;
+
+      if (conventions.length === 0) {
+        html += `<div class="empty-state">
+          <div class="empty-icon"><i data-lucide="book-open"></i></div>
+          <h3>No conventions defined</h3>
+          <p>Document coding standards and naming conventions for consistency.</p>
+        </div>`;
+      } else {
+        conventions.forEach(c => {
+          html += `<div class="team-item">
+            <div class="team-item-header">
+              <span class="diff-section-title">${escHtml(c.name)}</span>
+            </div>
+            <div class="team-item-content">${escHtml(c.description)}</div>
+            ${(c.examples || []).length > 0 ? `<div style="margin-top:8px;padding:8px 12px;background:var(--bg);border-radius:4px;font-family:monospace;font-size:12px;color:var(--text-muted);">
+              ${c.examples.map(ex => escHtml(ex)).join('<br>')}
+            </div>` : ''}
+            <div class="team-item-meta">
+              ${c.author ? `<span>by ${escHtml(c.author)}</span>` : ''}
+            </div>
+          </div>`;
+        });
+      }
+      el.innerHTML = html;
+    }
+
+    async function teamAddConvention() {
+      const name = prompt('Convention name:');
+      if (!name) return;
+      const description = prompt('Description:');
+      if (!description) return;
+      const author = prompt('Your name (optional):', '') || '';
+      try {
+        await fetch('/api/team/conventions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, description, author }),
+        });
+        await loadTeamTab();
+      } catch (e) { console.error(e); }
+    }
+
+    async function renderTeamAnnotations(el) {
+      const res = await fetch('/api/team/annotations');
+      const data = await res.json();
+      const annotations = data.annotations || [];
+
+      let html = `<div style="margin-bottom:16px;">
+        <button class="tool-btn primary" onclick="teamAddAnnotation()"><i data-lucide="plus" style="width:14px;height:14px;"></i> Add Annotation</button>
+      </div>`;
+
+      if (annotations.length === 0) {
+        html += `<div class="empty-state">
+          <div class="empty-icon"><i data-lucide="message-square"></i></div>
+          <h3>No annotations</h3>
+          <p>Annotate specific files or line ranges with team notes.</p>
+        </div>`;
+      } else {
+        annotations.forEach(a => {
+          html += `<div class="team-item">
+            <div class="team-item-header">
+              <span style="font-family:monospace;font-size:13px;color:var(--accent);cursor:pointer;" onclick="openFile('${escAttr(a.file_path)}')">${escHtml(a.file_path)}${a.line_range ? `:${escHtml(a.line_range)}` : ''}</span>
+              <button class="triage-delete-btn" onclick="teamDeleteAnnotation('${escAttr(a.id)}')"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button>
+            </div>
+            <div class="team-item-content">${escHtml(a.note)}</div>
+            <div class="team-item-meta">
+              ${a.author ? `<span>by ${escHtml(a.author)}</span>` : ''}
+              ${a.created_at ? `<span>${escHtml(a.created_at)}</span>` : ''}
+            </div>
+          </div>`;
+        });
+      }
+      el.innerHTML = html;
+    }
+
+    async function teamAddAnnotation() {
+      const file_path = prompt('File path:');
+      if (!file_path) return;
+      const note = prompt('Annotation note:');
+      if (!note) return;
+      const line_range = prompt('Line range (optional, e.g. 10-25):', '') || '';
+      const author = prompt('Your name (optional):', '') || '';
+      try {
+        await fetch('/api/team/annotations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ file_path, note, author, line_range: line_range || null }),
+        });
+        await loadTeamTab();
+      } catch (e) { console.error(e); }
+    }
+
+    async function teamDeleteAnnotation(id) {
+      if (!confirm('Delete this annotation?')) return;
+      try {
+        await fetch(`/api/team/annotations/${encodeURIComponent(id)}`, { method: 'DELETE' });
+        await loadTeamTab();
+      } catch (e) { console.error(e); }
+    }
+
+    async function renderTeamUsers(el) {
+      const res = await fetch('/api/team/users');
+      const data = await res.json();
+      const users = data.users || [];
+
+      let html = `<div style="margin-bottom:16px;">
+        <button class="tool-btn primary" onclick="teamAddUser()"><i data-lucide="user-plus" style="width:14px;height:14px;"></i> Register User</button>
+      </div>`;
+
+      if (users.length === 0) {
+        html += `<div class="empty-state">
+          <div class="empty-icon"><i data-lucide="users"></i></div>
+          <h3>No team members</h3>
+          <p>Register team members to track contributions.</p>
+        </div>`;
+      } else {
+        users.forEach(u => {
+          html += `<div class="team-item" style="display:flex;align-items:center;gap:12px;">
+            <div style="width:36px;height:36px;border-radius:50%;background:var(--accent-dim);display:flex;align-items:center;justify-content:center;color:var(--accent);font-weight:600;font-size:14px;">${escHtml((u.display_name || u.username || '?')[0].toUpperCase())}</div>
+            <div>
+              <div style="font-weight:500;font-size:14px;">${escHtml(u.display_name || u.username)}</div>
+              <div style="font-size:12px;color:var(--text-muted);">@${escHtml(u.username)}${u.joined_at ? ` &middot; joined ${escHtml(u.joined_at)}` : ''}</div>
+            </div>
+          </div>`;
+        });
+      }
+      el.innerHTML = html;
+    }
+
+    async function teamAddUser() {
+      const username = prompt('Username:');
+      if (!username) return;
+      const display_name = prompt('Display name (optional):', '') || '';
+      try {
+        await fetch('/api/team/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, display_name }),
+        });
+        await loadTeamTab();
+      } catch (e) { console.error(e); }
+    }
+
+    // ── Tools view ───────────────────────────────────────────────────────────────
+    async function renderToolsView() {
+      const container = document.getElementById('main-content');
+      container.innerHTML = `
+        <div style="padding: 32px;">
+          <h2 style="font-size:18px;font-weight:600;margin-bottom:24px;">Tools & Automation</h2>
+          <div class="tools-grid">
+
+            <div class="tool-card">
+              <div class="tool-card-header">
+                <div class="tool-icon" style="background:var(--accent-dim);color:var(--accent);"><i data-lucide="download" style="width:20px;height:20px;"></i></div>
+                <h3>AI Context Export</h3>
+              </div>
+              <p>Export documentation in a compact, token-efficient format optimized for LLM context windows.</p>
+              <div style="margin-bottom:12px;">
+                <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">Format</label>
+                <select id="export-format" style="padding:6px 10px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;">
+                  <option value="markdown">Markdown</option>
+                  <option value="xml">XML</option>
+                  <option value="json">JSON</option>
+                </select>
+              </div>
+              <div class="tool-card-actions">
+                <button class="tool-btn primary" onclick="toolExport()">Export</button>
+                <button class="tool-btn" onclick="toolExportCopy()">Copy to Clipboard</button>
+              </div>
+              <pre id="export-preview" style="display:none;margin-top:12px;max-height:300px;overflow:auto;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--text-muted);white-space:pre-wrap;word-break:break-word;"></pre>
+            </div>
+
+            <div class="tool-card">
+              <div class="tool-card-header">
+                <div class="tool-icon" style="background:rgba(34,197,94,0.1);color:var(--green);"><i data-lucide="filter" style="width:20px;height:20px;"></i></div>
+                <h3>Triage Feedback</h3>
+              </div>
+              <p>Review and manage triage corrections. Flag files that were incorrectly categorized to improve future runs.</p>
+              <div class="tool-card-actions">
+                <button class="tool-btn primary" onclick="toolLoadTriageFeedback()">View Feedback</button>
+                <button class="tool-btn" onclick="toolAddTriageFeedback()">Add Correction</button>
+              </div>
+              <div id="triage-feedback-list" style="margin-top:12px;"></div>
+            </div>
+
+            <div class="tool-card">
+              <div class="tool-card-header">
+                <div class="tool-icon" style="background:rgba(168,85,247,0.1);color:var(--purple);"><i data-lucide="clock" style="width:20px;height:20px;"></i></div>
+                <h3>Scheduled Re-runs</h3>
+              </div>
+              <p>Configure automatic documentation updates on a cron schedule or triggered by new commits.</p>
+              <div class="tool-card-actions">
+                <button class="tool-btn" onclick="toolScheduleInfo()">View Schedule Info</button>
+              </div>
+              <div id="schedule-info" style="margin-top:12px;font-size:12px;color:var(--text-muted);"></div>
+            </div>
+
+            <div class="tool-card">
+              <div class="tool-card-header">
+                <div class="tool-icon" style="background:rgba(245,158,11,0.1);color:var(--orange);"><i data-lucide="eye" style="width:20px;height:20px;"></i></div>
+                <h3>Watch Mode</h3>
+              </div>
+              <p>Monitor file changes and automatically trigger documentation updates on save. Start watch mode from the CLI.</p>
+              <div style="padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-family:monospace;font-size:12px;color:var(--text-muted);margin-top:8px;">
+                $ codilay watch .
+              </div>
+            </div>
+
+            <div class="tool-card">
+              <div class="tool-card-header">
+                <div class="tool-icon" style="background:rgba(59,130,246,0.1);color:var(--accent);"><i data-lucide="network" style="width:20px;height:20px;"></i></div>
+                <h3>Graph Filters</h3>
+              </div>
+              <p>Filter the dependency graph by wire type, file layer, or module. Use the Graph tab's filter panel.</p>
+              <div class="tool-card-actions">
+                <button class="tool-btn primary" onclick="switchView('graph')">Open Graph View</button>
+              </div>
+            </div>
+
+            <div class="tool-card">
+              <div class="tool-card-header">
+                <div class="tool-icon" style="background:rgba(34,197,94,0.1);color:var(--green);"><i data-lucide="git-compare" style="width:20px;height:20px;"></i></div>
+                <h3>Doc Diff</h3>
+              </div>
+              <p>Compare documentation between runs to see what changed at the section level.</p>
+              <div class="tool-card-actions">
+                <button class="tool-btn primary" onclick="switchView('diff')">Open Diff View</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      `;
+      updateIcons();
+    }
+
+    let lastExportContent = '';
+
+    async function toolExport() {
+      const fmt = document.getElementById('export-format').value;
+      const preview = document.getElementById('export-preview');
+      preview.style.display = 'block';
+      preview.textContent = 'Exporting...';
+
+      try {
+        const res = await fetch(`/api/export?fmt=${encodeURIComponent(fmt)}`);
+        if (!res.ok) throw new Error('Export failed');
+        const data = await res.json();
+        lastExportContent = data.content || '';
+        preview.textContent = lastExportContent.slice(0, 5000) + (lastExportContent.length > 5000 ? '\n\n... (truncated, ' + data.chars + ' chars total)' : '');
+      } catch (e) {
+        preview.textContent = 'Error: ' + e.message;
+      }
+    }
+
+    async function toolExportCopy() {
+      if (!lastExportContent) await toolExport();
+      if (lastExportContent) {
+        navigator.clipboard.writeText(lastExportContent).then(() => {
+          const btn = document.querySelector('[onclick="toolExportCopy()"]');
+          if (btn) { const orig = btn.textContent; btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = orig, 2000); }
+        });
+      }
+    }
+
+    async function toolLoadTriageFeedback() {
+      const el = document.getElementById('triage-feedback-list');
+      if (!el) return;
+      el.innerHTML = '<span style="color:var(--text-muted);font-size:12px;">Loading...</span>';
+
+      try {
+        const res = await fetch('/api/triage-feedback');
+        if (!res.ok) throw new Error('Failed to load');
+        const data = await res.json();
+        const entries = data.entries || [];
+
+        if (entries.length === 0) {
+          el.innerHTML = '<span style="font-size:12px;color:var(--text-muted);">No feedback entries yet.</span>';
+          return;
+        }
+
+        el.innerHTML = entries.map(e => `
+          <div class="triage-item">
+            <div>
+              <span class="triage-item-file">${escHtml(e.file_path)}</span>
+              <span style="font-size:11px;color:var(--text-muted);margin-left:8px;">${escHtml(e.original_category)} &rarr; ${escHtml(e.corrected_category)}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              ${e.reason ? `<span style="font-size:11px;color:var(--text-muted);">${escHtml(e.reason)}</span>` : ''}
+              <button class="triage-delete-btn" onclick="toolDeleteTriageFeedback('${escAttr(e.file_path)}')"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button>
+            </div>
+          </div>
+        `).join('');
+        updateIcons();
+      } catch (e) {
+        el.innerHTML = `<span style="color:var(--red);font-size:12px;">Error: ${escHtml(e.message)}</span>`;
+      }
+    }
+
+    async function toolAddTriageFeedback() {
+      const file_path = prompt('File path:');
+      if (!file_path) return;
+      const original_category = prompt('Original category (e.g. skip, include, partial):');
+      if (!original_category) return;
+      const corrected_category = prompt('Corrected category:');
+      if (!corrected_category) return;
+      const reason = prompt('Reason (optional):', '') || '';
+
+      try {
+        await fetch('/api/triage-feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ file_path, original_category, corrected_category, reason }),
+        });
+        await toolLoadTriageFeedback();
+      } catch (e) { console.error(e); }
+    }
+
+    async function toolDeleteTriageFeedback(filePath) {
+      if (!confirm('Remove this feedback?')) return;
+      try {
+        await fetch(`/api/triage-feedback/${encodeURIComponent(filePath)}`, { method: 'DELETE' });
+        await toolLoadTriageFeedback();
+      } catch (e) { console.error(e); }
+    }
+
+    function toolScheduleInfo() {
+      const el = document.getElementById('schedule-info');
+      if (!el) return;
+      el.innerHTML = `
+        <div style="padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;">
+          <p style="margin-bottom:8px;"><strong>CLI Commands:</strong></p>
+          <div style="font-family:monospace;font-size:11px;line-height:2;">
+            <div>$ codilay schedule set . --cron "0 */6 * * *"</div>
+            <div>$ codilay schedule set . --on-commit</div>
+            <div>$ codilay schedule status .</div>
+            <div>$ codilay schedule remove .</div>
+          </div>
+          <p style="margin-top:12px;font-size:11px;color:var(--text-muted);">Schedules are managed via the CLI and persist in your project config.</p>
+        </div>`;
+    }
+
     // ── View switching ───────────────────────────────────────────────────────────
     function switchView(view) {
       currentView = view;
@@ -1663,6 +3019,10 @@
       });
       if (view === 'document') renderDocument();
       else if (view === 'graph') renderGraph();
+      else if (view === 'diff') renderDiffView();
+      else if (view === 'search') renderSearchView();
+      else if (view === 'team') renderTeamView();
+      else if (view === 'tools') renderToolsView();
     }
 
     document.querySelectorAll('.view-tab').forEach(t => {

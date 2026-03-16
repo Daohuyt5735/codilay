@@ -134,6 +134,7 @@ def main_menu(settings: Settings) -> Optional[dict]:
         menu.add_row("[6]", "📊  View current settings")
         menu.add_row("[7]", "💬  Chat with your codebase")
         menu.add_row("[8]", "🌐  Launch Web UI")
+        menu.add_row("[t]", "🛠️   Tools & Automation")
         menu.add_row("[9]", "❓  Help")
         menu.add_row("[0]", "🚪  Exit")
 
@@ -142,7 +143,7 @@ def main_menu(settings: Settings) -> Optional[dict]:
 
         choice = Prompt.ask(
             "[bold cyan]Select an option[/bold cyan]",
-            choices=["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
+            choices=["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "t"],
             default="1",
         )
 
@@ -177,6 +178,11 @@ def main_menu(settings: Settings) -> Optional[dict]:
 
         elif choice == "8":
             result = _menu_serve(settings)
+            if result:
+                return result
+
+        elif choice == "t":
+            result = _menu_tools(settings)
             if result:
                 return result
 
@@ -333,8 +339,16 @@ def _menu_setup(settings: Settings):
             "[bold green]Setup complete! 🎉[/bold green]\n\n"
             "Your configuration has been saved. You can now:\n"
             "  • Run [bold]codilay .[/bold] to document a codebase\n"
+            "  • Run [bold]codilay chat .[/bold] to ask questions about your code\n"
             "  • Come back here anytime to change settings\n\n"
-            "No more exporting API keys! 🔑",
+            "No more exporting API keys! 🔑\n\n"
+            "[bold cyan]New tools available:[/bold cyan]\n"
+            "  • [bold]codilay watch .[/bold]     — auto-update docs on save\n"
+            "  • [bold]codilay export .[/bold]    — AI-optimized doc export\n"
+            "  • [bold]codilay search . -q[/bold] — search past conversations\n"
+            "  • [bold]codilay schedule[/bold]    — scheduled re-runs\n"
+            "  • [bold]codilay team[/bold]        — shared team memory\n\n"
+            "[dim]Explore all tools via the [bold]Tools & Automation[/bold] menu (press [bold]t[/bold]).[/dim]",
             border_style="green",
         )
     )
@@ -763,7 +777,303 @@ def _menu_serve(settings: Settings) -> Optional[dict]:
     return {"action": "serve", "target": target}
 
 
-# ── 8. Help ───────────────────────────────────────────────────────────────────
+# ── T. Tools & Automation ────────────────────────────────────────────────────
+
+
+def _menu_tools(settings: Settings) -> Optional[dict]:
+    """Show the Tools & Automation submenu for new features."""
+    while True:
+        _clear()
+        _header("Tools & Automation")
+        _back_hint()
+
+        menu = Table(show_header=False, box=None, padding=(0, 2))
+        menu.add_column("key", style="bold cyan", width=6, justify="right")
+        menu.add_column("action")
+
+        menu.add_row("[1]", "👁   Watch mode — auto-update docs on file save")
+        menu.add_row("[2]", "📤  AI context export — compact doc for LLM context")
+        menu.add_row("[3]", "📑  Doc diff — compare documentation versions")
+        menu.add_row("[4]", "🔍  Search — full-text search across conversations")
+        menu.add_row("[5]", "🗓️   Schedule — auto re-run on cron / git commits")
+        menu.add_row("[6]", "🔀  Graph filters — filter dependency graph")
+        menu.add_row("[7]", "🧠  Team memory — shared facts & decisions")
+        menu.add_row("[8]", "📊  Triage feedback — improve triage accuracy")
+        menu.add_row("[0]", "← Back to main menu")
+
+        console.print(menu)
+        console.print()
+
+        choice = Prompt.ask(
+            "[bold cyan]Select a tool[/bold cyan]",
+            choices=["0", "1", "2", "3", "4", "5", "6", "7", "8"],
+            default="0",
+        )
+
+        if choice == "0":
+            return None
+
+        elif choice == "1":
+            result = _menu_tool_watch(settings)
+            if result:
+                return result
+
+        elif choice == "2":
+            result = _menu_tool_export(settings)
+            if result:
+                return result
+
+        elif choice == "3":
+            result = _menu_tool_diff_doc(settings)
+            if result:
+                return result
+
+        elif choice == "4":
+            result = _menu_tool_search(settings)
+            if result:
+                return result
+
+        elif choice == "5":
+            result = _menu_tool_schedule(settings)
+            if result:
+                return result
+
+        elif choice == "6":
+            result = _menu_tool_graph_filter(settings)
+            if result:
+                return result
+
+        elif choice == "7":
+            result = _menu_tool_team_memory(settings)
+            if result:
+                return result
+
+        elif choice == "8":
+            result = _menu_tool_triage_feedback(settings)
+            if result:
+                return result
+
+
+def _prompt_target_path(label: str = "Path to codebase") -> Optional[str]:
+    """Prompt for a target path with validation. Returns None on cancel."""
+    raw = Prompt.ask(f"{label} [dim](0 to go back)[/dim]", default=".")
+    if _is_back(raw):
+        return None
+    target = os.path.abspath(raw)
+    if not os.path.isdir(target):
+        console.print(f"[red]Not a valid directory: {target}[/red]")
+        _pause()
+        return None
+    return target
+
+
+def _menu_tool_watch(settings: Settings) -> Optional[dict]:
+    """Launch watch mode for a codebase."""
+    _clear()
+    _header("Watch Mode")
+    _back_hint()
+
+    console.print(
+        Panel(
+            "Watch mode monitors your codebase for file changes and\n"
+            "automatically re-generates documentation when files are saved.\n\n"
+            "[dim]Requires the [bold]watchdog[/bold] package (install with "
+            "[bold]pip install codilay[watch][/bold]).[/dim]",
+            border_style="cyan",
+        )
+    )
+    console.print()
+
+    target = _prompt_target_path()
+    if not target:
+        return None
+
+    return {"action": "watch", "target": target}
+
+
+def _menu_tool_export(settings: Settings) -> Optional[dict]:
+    """Export documentation for AI context."""
+    _clear()
+    _header("AI Context Export")
+    _back_hint()
+
+    console.print(
+        Panel(
+            "Export a compact, token-efficient version of your documentation\n"
+            "optimized for feeding into an LLM's context window.\n\n"
+            "[bold]Formats:[/bold]\n"
+            "  1. compact — minimal prose, max density\n"
+            "  2. structured — JSON with sections & metadata\n"
+            "  3. narrative — readable summary",
+            border_style="cyan",
+        )
+    )
+    console.print()
+
+    target = _prompt_target_path()
+    if not target:
+        return None
+
+    fmt_choice = Prompt.ask(
+        "Export format",
+        choices=["compact", "structured", "narrative"],
+        default="compact",
+    )
+    if _is_back(fmt_choice):
+        return None
+
+    return {"action": "export", "target": target, "format": fmt_choice}
+
+
+def _menu_tool_diff_doc(settings: Settings) -> Optional[dict]:
+    """View documentation diffs between versions."""
+    _clear()
+    _header("Documentation Diff")
+    _back_hint()
+
+    console.print(
+        Panel(
+            "Compare documentation across versions to see what changed.\n"
+            "Shows section-by-section diffs: added, removed, and modified content.\n\n"
+            "[dim]Snapshots are saved automatically each time docs are generated.[/dim]",
+            border_style="cyan",
+        )
+    )
+    console.print()
+
+    target = _prompt_target_path()
+    if not target:
+        return None
+
+    return {"action": "diff-doc", "target": target}
+
+
+def _menu_tool_search(settings: Settings) -> Optional[dict]:
+    """Search across past conversations."""
+    _clear()
+    _header("Conversation Search")
+    _back_hint()
+
+    console.print(
+        Panel(
+            "Full-text search across all past conversations.\n"
+            "Find answers you've already received without re-asking.\n\n"
+            "[dim]Uses TF-IDF ranking for relevant results.[/dim]",
+            border_style="cyan",
+        )
+    )
+    console.print()
+
+    target = _prompt_target_path()
+    if not target:
+        return None
+
+    query = Prompt.ask("Search query [dim](0 to cancel)[/dim]")
+    if _is_back(query):
+        return None
+
+    return {"action": "search", "target": target, "query": query}
+
+
+def _menu_tool_schedule(settings: Settings) -> Optional[dict]:
+    """Configure scheduled re-runs."""
+    _clear()
+    _header("Scheduled Re-runs")
+    _back_hint()
+
+    console.print(
+        Panel(
+            "Auto-trigger documentation updates on a schedule or when\n"
+            "new commits land on your main branch.\n\n"
+            "[bold]Options:[/bold]\n"
+            "  1. View current schedule status\n"
+            "  2. Set a cron schedule\n"
+            "  3. Disable schedule",
+            border_style="cyan",
+        )
+    )
+    console.print()
+
+    target = _prompt_target_path()
+    if not target:
+        return None
+
+    return {"action": "schedule-status", "target": target}
+
+
+def _menu_tool_graph_filter(settings: Settings) -> Optional[dict]:
+    """Launch graph with filters."""
+    _clear()
+    _header("Graph Filters")
+    _back_hint()
+
+    console.print(
+        Panel(
+            "Filter the dependency graph by wire type, file layer, or\n"
+            "module to reduce noise on large repositories.\n\n"
+            "[dim]Best used via the Web UI for interactive filtering.\n"
+            "Use [bold]codilay graph <path>[/bold] on the CLI.[/dim]",
+            border_style="cyan",
+        )
+    )
+    console.print()
+
+    target = _prompt_target_path()
+    if not target:
+        return None
+
+    return {"action": "graph", "target": target}
+
+
+def _menu_tool_team_memory(settings: Settings) -> Optional[dict]:
+    """Manage team memory."""
+    _clear()
+    _header("Team Memory")
+    _back_hint()
+
+    console.print(
+        Panel(
+            "Shared knowledge base across your team — facts, decisions,\n"
+            "conventions, and code annotations.\n\n"
+            "[bold]Actions:[/bold]\n"
+            "  Use [bold]codilay team facts/decisions/conventions <path>[/bold] on the CLI.\n\n"
+            "[dim]Also available in the Web UI under the Team tab.[/dim]",
+            border_style="cyan",
+        )
+    )
+    console.print()
+
+    target = _prompt_target_path()
+    if not target:
+        return None
+
+    return {"action": "team", "target": target}
+
+
+def _menu_tool_triage_feedback(settings: Settings) -> Optional[dict]:
+    """Manage triage feedback."""
+    _clear()
+    _header("Triage Feedback")
+    _back_hint()
+
+    console.print(
+        Panel(
+            "Flag incorrect triage decisions to improve future runs.\n"
+            "Teach CodiLay which files should or shouldn't be documented.\n\n"
+            "[dim]Use [bold]codilay triage-feedback add/list/hint <path>[/bold] on the CLI.[/dim]",
+            border_style="cyan",
+        )
+    )
+    console.print()
+
+    target = _prompt_target_path()
+    if not target:
+        return None
+
+    return {"action": "triage-feedback", "target": target}
+
+
+# ── 9. Help ───────────────────────────────────────────────────────────────────
 
 
 def _menu_help():
@@ -779,7 +1089,7 @@ def _menu_help():
             "  1. Run [bold]codilay[/bold] → interactive menu\n"
             "  2. Go to [bold]Setup[/bold] to configure your API key\n"
             "  3. Go to [bold]Document a codebase[/bold] and point to your project\n\n"
-            "[bold cyan]CLI Usage[/bold cyan]\n"
+            "[bold cyan]Core Commands[/bold cyan]\n"
             "  [bold]codilay .[/bold]                        Document current directory\n"
             "  [bold]codilay /path/to/project[/bold]         Document a project\n"
             "  [bold]codilay . -p openai -m gpt-4o[/bold]    Override provider/model\n"
@@ -791,8 +1101,21 @@ def _menu_help():
             "  [bold]codilay config[/bold]                   View settings\n"
             "  [bold]codilay keys[/bold]                     Manage API keys\n"
             "  [bold]codilay status .[/bold]                 Show doc status\n"
-            "  [bold]codilay diff .[/bold]                   Show changes since last run\n"
+            "  [bold]codilay diff .[/bold]                   Show git changes since last run\n"
             "  [bold]codilay clean .[/bold]                  Remove generated files\n\n"
+            "[bold cyan]Tools & Automation[/bold cyan]\n"
+            "  [bold]codilay watch .[/bold]                  Watch mode — auto-update on save\n"
+            "  [bold]codilay export . --for-ai[/bold]        AI-optimized doc export\n"
+            "  [bold]codilay diff-doc .[/bold]               Doc-level diff between versions\n"
+            "  [bold]codilay search . -q 'auth'[/bold]       Search past conversations\n"
+            "  [bold]codilay schedule set . '0 2 * * *'[/bold]  Cron-based auto re-runs\n"
+            "  [bold]codilay graph .[/bold]                  Filtered dependency graph\n\n"
+            "[bold cyan]Collaboration[/bold cyan]\n"
+            "  [bold]codilay team facts .[/bold]             View shared team facts\n"
+            "  [bold]codilay team add-fact .[/bold]          Add a team fact\n"
+            "  [bold]codilay team decisions .[/bold]         View team decisions\n"
+            "  [bold]codilay triage-feedback list .[/bold]   View triage feedback\n"
+            "  [bold]codilay triage-feedback add . f.py[/bold]  Flag a triage error\n\n"
             "[bold cyan]Navigation[/bold cyan]\n"
             "  Enter [bold]0[/bold] or [bold]b[/bold] at any prompt to go back\n"
             "  Press [bold]Ctrl+C[/bold] to quit immediately\n\n"

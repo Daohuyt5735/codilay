@@ -734,6 +734,368 @@ def create_app(
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
+    # ── Feature 3: AI-friendly export ─────────────────────────────
+
+    class ExportRequest(BaseModel):
+        format: str = "markdown"  # markdown, xml, json
+        max_tokens: Optional[int] = None
+        include_graph: bool = True
+        include_unresolved: bool = False
+
+    @app.post("/api/export")
+    async def export_for_ai(req: ExportRequest):
+        """Export documentation in a compact, AI-friendly format."""
+        try:
+            from codilay.exporter import export_for_ai as _export_for_ai
+
+            result = await asyncio.to_thread(
+                _export_for_ai,
+                output_dir=output_dir,
+                fmt=req.format,
+                max_tokens=req.max_tokens,
+                include_graph=req.include_graph,
+            )
+            return {"content": result, "format": req.format, "chars": len(result)}
+        except FileNotFoundError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/api/export")
+    async def export_for_ai_get(
+        fmt: str = "markdown",
+        max_tokens: Optional[int] = None,
+        include_graph: bool = True,
+    ):
+        """GET version of export for easy curl/browser access."""
+        try:
+            from codilay.exporter import export_for_ai as _export_for_ai
+
+            result = await asyncio.to_thread(
+                _export_for_ai,
+                output_dir=output_dir,
+                fmt=fmt,
+                max_tokens=max_tokens,
+                include_graph=include_graph,
+            )
+            return {"content": result, "format": fmt, "chars": len(result)}
+        except FileNotFoundError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    # ── Feature 4: Doc diff ───────────────────────────────────────
+
+    @app.get("/api/doc-diff")
+    async def get_doc_diff():
+        """Get documentation changes between the last two runs."""
+        try:
+            from codilay.doc_differ import DocVersionStore
+
+            store = DocVersionStore(output_dir)
+            snapshots = store.list_snapshots()
+
+            if len(snapshots) < 2:
+                return {"has_changes": False, "message": "Need at least 2 snapshots", "snapshots": len(snapshots)}
+
+            result = store.diff_latest()
+            if result is None:
+                raise HTTPException(status_code=500, detail="Could not compute diff")
+
+            return result.to_dict()
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/api/doc-diff/snapshots")
+    async def list_snapshots():
+        """List all documentation snapshots."""
+        from codilay.doc_differ import DocVersionStore
+
+        store = DocVersionStore(output_dir)
+        return {"snapshots": store.list_snapshots()}
+
+    # ── Feature 5: Triage feedback ────────────────────────────────
+
+    class TriageFeedbackRequest(BaseModel):
+        file_path: str
+        original_category: str
+        corrected_category: str
+        reason: str = ""
+        is_pattern: bool = False
+
+    @app.get("/api/triage-feedback")
+    async def list_triage_feedback():
+        """List all triage feedback entries."""
+        from codilay.triage_feedback import TriageFeedbackStore
+
+        store = TriageFeedbackStore(output_dir)
+        entries = store.list_feedback()
+        return {
+            "entries": [e.to_dict() for e in entries],
+            "hints": store.get_project_hints(),
+        }
+
+    @app.post("/api/triage-feedback")
+    async def add_triage_feedback(req: TriageFeedbackRequest):
+        """Record a triage correction."""
+        from codilay.triage_feedback import TriageFeedbackStore
+
+        store = TriageFeedbackStore(output_dir)
+        entry = store.add_feedback(
+            req.file_path,
+            req.original_category,
+            req.corrected_category,
+            reason=req.reason,
+            is_pattern=req.is_pattern,
+        )
+        return entry.to_dict()
+
+    @app.delete("/api/triage-feedback/{file_path:path}")
+    async def remove_triage_feedback(file_path: str):
+        """Remove feedback for a specific file."""
+        from codilay.triage_feedback import TriageFeedbackStore
+
+        store = TriageFeedbackStore(output_dir)
+        if store.remove_feedback(file_path):
+            return {"deleted": True}
+        raise HTTPException(status_code=404, detail="Feedback not found")
+
+    # ── Feature 7: Graph filters ──────────────────────────────────
+
+    class GraphFilterRequest(BaseModel):
+        wire_types: Optional[List[str]] = None
+        layers: Optional[List[str]] = None
+        modules: Optional[List[str]] = None
+        exclude_files: Optional[List[str]] = None
+        direction: str = "both"
+        min_connections: int = 0
+
+    @app.get("/api/graph/filters")
+    async def get_graph_filters():
+        """Get available filter values for the dependency graph."""
+        from codilay.graph_filter import GraphFilter
+
+        links = _load_links()
+        gf = GraphFilter(
+            closed_wires=links.get("closed", []),
+            open_wires=links.get("open", []),
+        )
+        return gf.get_available_filters()
+
+    @app.post("/api/graph/filter")
+    async def filter_graph(req: GraphFilterRequest):
+        """Apply filters to the dependency graph."""
+        from codilay.graph_filter import GraphFilter, GraphFilterOptions
+
+        links = _load_links()
+        gf = GraphFilter(
+            closed_wires=links.get("closed", []),
+            open_wires=links.get("open", []),
+        )
+        options = GraphFilterOptions(
+            wire_types=req.wire_types,
+            layers=req.layers,
+            modules=req.modules,
+            exclude_files=req.exclude_files,
+            direction=req.direction,
+            min_connections=req.min_connections,
+        )
+        result = gf.filter(options)
+        return result.to_dict()
+
+    # ── Feature 8: Team memory ────────────────────────────────────
+
+    @app.get("/api/team/facts")
+    async def get_team_facts(category: Optional[str] = None):
+        """List team facts."""
+        from codilay.team_memory import TeamMemory
+
+        tm = TeamMemory(output_dir)
+        return {"facts": tm.list_facts(category=category)}
+
+    class TeamFactRequest(BaseModel):
+        fact: str
+        category: str = "general"
+        author: str = ""
+        tags: Optional[List[str]] = None
+
+    @app.post("/api/team/facts")
+    async def add_team_fact(req: TeamFactRequest):
+        """Add a team fact."""
+        from codilay.team_memory import TeamMemory
+
+        tm = TeamMemory(output_dir)
+        return tm.add_fact(req.fact, category=req.category, author=req.author, tags=req.tags)
+
+    @app.delete("/api/team/facts/{fact_id}")
+    async def remove_team_fact(fact_id: str):
+        """Remove a team fact."""
+        from codilay.team_memory import TeamMemory
+
+        tm = TeamMemory(output_dir)
+        if tm.remove_fact(fact_id):
+            return {"deleted": True}
+        raise HTTPException(status_code=404, detail="Fact not found")
+
+    @app.post("/api/team/facts/{fact_id}/vote")
+    async def vote_team_fact(fact_id: str, vote: str = "up"):
+        """Vote on a team fact (up or down)."""
+        from codilay.team_memory import TeamMemory
+
+        tm = TeamMemory(output_dir)
+        if tm.vote_fact(fact_id, vote):
+            return {"voted": vote}
+        raise HTTPException(status_code=404, detail="Fact not found")
+
+    @app.get("/api/team/decisions")
+    async def get_team_decisions(status: Optional[str] = None):
+        """List team decisions."""
+        from codilay.team_memory import TeamMemory
+
+        tm = TeamMemory(output_dir)
+        return {"decisions": tm.list_decisions(status=status)}
+
+    class TeamDecisionRequest(BaseModel):
+        title: str
+        description: str
+        author: str = ""
+        related_files: Optional[List[str]] = None
+
+    @app.post("/api/team/decisions")
+    async def add_team_decision(req: TeamDecisionRequest):
+        """Record a team decision."""
+        from codilay.team_memory import TeamMemory
+
+        tm = TeamMemory(output_dir)
+        return tm.add_decision(req.title, req.description, author=req.author, related_files=req.related_files)
+
+    @app.patch("/api/team/decisions/{decision_id}")
+    async def update_team_decision_status(decision_id: str, status: str):
+        """Update a decision's status."""
+        from codilay.team_memory import TeamMemory
+
+        tm = TeamMemory(output_dir)
+        if tm.update_decision_status(decision_id, status):
+            return {"updated": True}
+        raise HTTPException(status_code=404, detail="Decision not found")
+
+    @app.get("/api/team/conventions")
+    async def get_team_conventions():
+        """List team conventions."""
+        from codilay.team_memory import TeamMemory
+
+        tm = TeamMemory(output_dir)
+        return {"conventions": tm.list_conventions()}
+
+    class TeamConventionRequest(BaseModel):
+        name: str
+        description: str
+        examples: Optional[List[str]] = None
+        author: str = ""
+
+    @app.post("/api/team/conventions")
+    async def add_team_convention(req: TeamConventionRequest):
+        """Add a coding convention."""
+        from codilay.team_memory import TeamMemory
+
+        tm = TeamMemory(output_dir)
+        return tm.add_convention(req.name, req.description, examples=req.examples, author=req.author)
+
+    class TeamAnnotationRequest(BaseModel):
+        file_path: str
+        note: str
+        author: str = ""
+        line_range: Optional[str] = None
+
+    @app.get("/api/team/annotations")
+    async def get_team_annotations(file_path: Optional[str] = None):
+        """List file annotations."""
+        from codilay.team_memory import TeamMemory
+
+        tm = TeamMemory(output_dir)
+        return {"annotations": tm.get_annotations(file_path=file_path)}
+
+    @app.post("/api/team/annotations")
+    async def add_team_annotation(req: TeamAnnotationRequest):
+        """Add a file annotation."""
+        from codilay.team_memory import TeamMemory
+
+        tm = TeamMemory(output_dir)
+        return tm.add_annotation(req.file_path, req.note, author=req.author, line_range=req.line_range)
+
+    @app.delete("/api/team/annotations/{annotation_id}")
+    async def remove_team_annotation(annotation_id: str):
+        """Remove an annotation."""
+        from codilay.team_memory import TeamMemory
+
+        tm = TeamMemory(output_dir)
+        if tm.remove_annotation(annotation_id):
+            return {"deleted": True}
+        raise HTTPException(status_code=404, detail="Annotation not found")
+
+    @app.get("/api/team/users")
+    async def get_team_users():
+        """List team members."""
+        from codilay.team_memory import TeamMemory
+
+        tm = TeamMemory(output_dir)
+        return {"users": tm.list_users()}
+
+    class TeamUserRequest(BaseModel):
+        username: str
+        display_name: str = ""
+
+    @app.post("/api/team/users")
+    async def register_team_user(req: TeamUserRequest):
+        """Register a team member."""
+        from codilay.team_memory import TeamMemory
+
+        tm = TeamMemory(output_dir)
+        return tm.register_user(req.username, display_name=req.display_name)
+
+    @app.get("/api/team/context")
+    async def get_team_context():
+        """Get team knowledge formatted for LLM context injection."""
+        from codilay.team_memory import TeamMemory
+
+        tm = TeamMemory(output_dir)
+        return {"context": tm.build_context()}
+
+    # ── Feature 9: Conversation search ────────────────────────────
+
+    @app.get("/api/search")
+    async def search_conversations(
+        q: str,
+        top_k: int = 20,
+        role: Optional[str] = None,
+        conversation_id: Optional[str] = None,
+    ):
+        """Full-text search across all conversations."""
+        from codilay.search import ConversationSearch
+
+        searcher = ConversationSearch(output_dir)
+        if not searcher.load_index():
+            await asyncio.to_thread(searcher.build_index)
+
+        results = searcher.search(
+            query=q,
+            top_k=top_k,
+            role_filter=role,
+            conv_id_filter=conversation_id,
+        )
+        return results.to_dict()
+
+    @app.post("/api/search/rebuild")
+    async def rebuild_search_index():
+        """Rebuild the conversation search index."""
+        from codilay.search import ConversationSearch
+
+        searcher = ConversationSearch(output_dir)
+        await asyncio.to_thread(searcher.build_index)
+        return {"rebuilt": True}
+
     return app
 
 

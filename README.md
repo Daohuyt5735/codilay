@@ -23,6 +23,12 @@ cd codilay
 
 # Install with Web UI support
 pip install -e ".[serve]"
+
+# Install with Watch mode support
+pip install -e ".[watch]"
+
+# Install everything (Web UI + Watch mode)
+pip install -e ".[all]"
 ```
 
 ### 2. First-Time Setup
@@ -76,6 +82,181 @@ The Web UI isn't just a reader—it's an interactive intelligence layer.
 codilay serve .
 ```
 
+### 👁 Watch Mode
+Run CodiLay in the background and automatically update documentation when files change. Uses filesystem events (via watchdog) with configurable debouncing to avoid redundant re-runs.
+
+```bash
+# Watch the current directory, auto-update on save
+codilay watch .
+
+# Custom debounce delay (5 seconds)
+codilay watch . --debounce 5
+
+# Verbose output for debugging
+codilay watch . -v
+```
+
+### 🧩 IDE Integration (VSCode Extension)
+A VSCode extension that surfaces documentation inline alongside the file you're editing. Features include:
+- **Sidebar tree view** of all documented sections
+- **Webview panel** showing full documentation for the active file
+- **Inline decorations** highlighting documented symbols
+- **Quick commands** for asking questions, viewing the graph, and searching conversations
+
+Install from `vscode-extension/` directory — see the extension README for details.
+
+### 🤖 AI Context Export
+Export your documentation in a compact, token-efficient format designed for feeding into another LLM's context window. Supports markdown, XML, and JSON formats with optional token budgets.
+
+```bash
+# Export as compact markdown (default)
+codilay export .
+
+# Export as XML with a 4000-token budget
+codilay export . --format xml --max-tokens 4000
+
+# Export as JSON, exclude the dependency graph
+codilay export . -f json --no-graph -o context.json
+```
+
+### 📊 Documentation Diff
+See a section-by-section changelog of what shifted in your documentation between runs. Unlike `codilay diff` (which shows git-level file changes), `diff-doc` compares the actual documentation content.
+
+```bash
+# Show what changed in the docs since the last run
+codilay diff-doc .
+
+# Output as JSON for programmatic use
+codilay diff-doc . --json-output
+```
+
+Snapshots are saved automatically after every `codilay run`, so diffs are always available.
+
+### 🎯 Triage Tuning
+Flag incorrect triage decisions to improve future runs. Corrections are stored per-project and automatically applied during the triage phase of subsequent runs.
+
+```bash
+# Flag a file that was skimmed but should be core
+codilay triage-feedback add . src/auth/handler.py skim core -r "Contains critical auth logic"
+
+# Flag a pattern (glob-based)
+codilay triage-feedback add . "tests/**" core skip --pattern -r "Tests should be skipped"
+
+# List all stored feedback
+codilay triage-feedback list .
+
+# Set a hint for a project type
+codilay triage-feedback hint . react "Treat all hooks/ files as core"
+
+# Remove feedback for a specific file
+codilay triage-feedback remove . src/auth/handler.py
+
+# Clear all feedback
+codilay triage-feedback clear . --yes
+```
+
+### 🔍 Graph Filters
+Filter the dependency graph by wire type, file layer, module, or connection count. Essential for reducing noise on large repositories.
+
+```bash
+# Show only import-type wires
+codilay graph . --wire-type import
+
+# Filter to a specific directory layer
+codilay graph . --layer src/api
+
+# Show only nodes with 3+ connections, outgoing edges only
+codilay graph . --min-connections 3 --direction outgoing
+
+# Combine filters, exclude tests
+codilay graph . -w import -l src/core -x "tests/**"
+
+# List available filter values for a project
+codilay graph . --list-filters
+
+# Output as JSON
+codilay graph . --json-output
+```
+
+### 🧠 Team Memory
+A shared knowledge base for teams working on the same project. Record facts, architectural decisions, coding conventions, and file annotations — all stored per-project and surfaced to the AI during documentation and chat.
+
+```bash
+# Add a team member
+codilay team add-user . alice --display-name "Alice Chen"
+
+# Record a fact
+codilay team add-fact . "We use Celery for async tasks" -c architecture -a alice -t backend -t infra
+
+# Vote on a fact
+codilay team vote . <fact-id> up
+
+# Record an architectural decision
+codilay team add-decision . "Use PostgreSQL over MySQL" "Better JSON support, needed for our schema" -a alice -f src/db/
+
+# Add a coding convention
+codilay team add-convention . "Error Handling" "All API endpoints must return structured error responses" -e '{"error": "message", "code": 400}' -a alice
+
+# Annotate a specific file
+codilay team annotate . src/api/routes.py "This file is getting too large, plan to split by domain" -a alice -l 1-50
+
+# List everything
+codilay team facts .                   # All facts
+codilay team facts . -c architecture   # Facts by category
+codilay team decisions .               # All decisions
+codilay team decisions . -s active     # Active decisions only
+codilay team conventions .             # All conventions
+codilay team annotations .             # All annotations
+codilay team annotations . -f src/api/routes.py  # Per-file
+codilay team users .                   # All members
+```
+
+### 🔎 Conversation Search
+Full-text search across all past chat conversations — not just the current session. Uses an inverted index with TF-IDF scoring for fast, relevant results.
+
+```bash
+# Search all conversations
+codilay search . "authentication flow"
+
+# Top 5 results, assistant messages only
+codilay search . "error handling" --top 5 --role assistant
+
+# Search within a specific conversation
+codilay search . "database migration" -c <conversation-id>
+
+# Rebuild the index (after manual edits to chat files)
+codilay search . "query" --rebuild
+```
+
+### 📅 Scheduled Re-runs
+Automatically trigger documentation updates on a cron schedule or when new commits land on a branch. Runs as a background daemon with PID file management.
+
+```bash
+# Update docs every day at 2am
+codilay schedule set . --cron "0 2 * * *"
+
+# Update on every new commit to main
+codilay schedule set . --on-commit --branch main
+
+# Combine: cron + commit triggers
+codilay schedule set . --cron "0 2 * * *" --on-commit
+
+# Check current schedule
+codilay schedule status .
+
+# Start the scheduler (foreground)
+codilay schedule start .
+
+# Start with verbose logging
+codilay schedule start . -v
+
+# Stop a running scheduler
+codilay schedule stop .
+
+# Disable the schedule
+codilay schedule disable .
+```
+
 ---
 
 ## ⌨️ CLI Reference
@@ -87,10 +268,18 @@ codilay serve .
 | `codilay chat .` | Start a **Chat session** about the project |
 | `codilay serve .` | Launch the **Web UI** |
 | `codilay status .` | Show documentation coverage and stale sections |
-| `codilay diff .` | See what changed since the last documentation run |
+| `codilay diff .` | See what changed in files since the last run |
 | `codilay setup` | Configure default provider, model, and API keys |
 | `codilay keys` | Manage stored API keys |
 | `codilay clean .` | Wipe all generated artifacts |
+| `codilay watch .` | Watch for file changes, auto-update docs |
+| `codilay export .` | Export docs in AI-friendly format (markdown/xml/json) |
+| `codilay diff-doc .` | Show section-level documentation diff between runs |
+| `codilay triage-feedback` | Manage triage corrections (add/list/hint/clear/remove) |
+| `codilay graph .` | View and filter the dependency graph |
+| `codilay team` | Manage shared team knowledge (facts/decisions/conventions) |
+| `codilay search . "query"` | Full-text search across all past conversations |
+| `codilay schedule` | Configure and run scheduled doc updates (set/start/stop) |
 
 ---
 
@@ -123,15 +312,28 @@ CodiLay is provider-agnostic. Power it with:
 
 ```text
 src/codilay/
-├── cli.py           # Command parsing & Interactive Menu
-├── scanner.py       # Git-aware file walking
-├── triage.py        # AI-powered file categorization
-├── processor.py     # The Agent Loop & Large file chunking
-├── wire_manager.py  # Linkage & Dependency resolution
-├── docstore.py      # Living CODEBASE.md management
-├── chatstore.py     # Persistent memory & Chat history
-├── server.py        # FastAPI Intelligence Server (Web UI)
-└── web/             # Premium Glassmorphic Frontend
+├── cli.py              # Command parsing & Interactive Menu
+├── scanner.py          # Git-aware file walking
+├── triage.py           # AI-powered file categorization
+├── processor.py        # The Agent Loop & Large file chunking
+├── wire_manager.py     # Linkage & Dependency resolution
+├── docstore.py         # Living CODEBASE.md management
+├── chatstore.py        # Persistent memory & Chat history
+├── server.py           # FastAPI Intelligence Server (Web UI + API)
+├── watcher.py          # File system watcher (watch mode)
+├── exporter.py         # AI-friendly doc export (markdown/xml/json)
+├── doc_differ.py       # Section-level doc diffing & version snapshots
+├── triage_feedback.py  # Triage correction store & feedback loop
+├── graph_filter.py     # Dependency graph filtering engine
+├── team_memory.py      # Shared team knowledge base
+├── search.py           # Full-text conversation search (inverted index)
+├── scheduler.py        # Cron & commit-based auto re-runs
+└── web/                # Premium Glassmorphic Frontend
+
+vscode-extension/       # VSCode extension for inline doc surfacing
+├── package.json
+├── tsconfig.json
+└── src/extension.ts
 ```
 
 ---
@@ -141,7 +343,7 @@ src/codilay/
 We love contributors! Trace your own wires into the project by checking out [CONTRIBUTING.md](CONTRIBUTING.md).
 
 1.  **Fork** the repo.
-2.  **Install** dev deps: `pip install -e ".[dev]"`
+2.  **Install** dev deps: `pip install -e ".[all,dev]"`
 3.  **Test**: `pytest`
 4.  **Submit** a PR.
 

@@ -35,6 +35,14 @@ serve = [
     "fastapi>=0.104.0",
     "uvicorn[standard]>=0.24.0",
 ]
+watch = [
+    "watchdog>=3.0.0",
+]
+all = [
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "watchdog>=3.0.0",
+]
 dev = [
     "pytest>=7.0",
     "ruff>=0.1.0",

@@ -11,6 +11,19 @@ Usage:
     codilay keys                         Manage API keys
     codilay status .                     Show doc status
     codilay clean .                      Remove generated files
+
+Tools & Automation:
+    codilay watch .                      Watch mode — auto-update on save
+    codilay export . --for-ai            AI-optimized doc export
+    codilay diff-doc .                   Doc-level diff between versions
+    codilay search . -q 'query'          Search past conversations
+    codilay schedule set . '0 2 * * *'   Cron-based auto re-runs
+    codilay graph .                      Filtered dependency graph
+
+Collaboration:
+    codilay team facts .                 View shared team facts
+    codilay team add-fact .              Add a team fact
+    codilay triage-feedback list .       View triage feedback
 """
 
 import json
@@ -117,6 +130,17 @@ def cli(ctx, config, output, model, provider, base_url, verbose):
         codilay setup                    First-time setup wizard
         codilay config                   View current settings
         codilay keys                     Manage API keys
+
+    \b
+    Tools & Automation:
+        codilay watch .                  Watch mode — auto-update on save
+        codilay export . --for-ai        AI-optimized doc export
+        codilay diff-doc .               Doc diff between versions
+        codilay search . -q 'query'      Search past conversations
+        codilay schedule set . CRON      Cron-based auto re-runs
+        codilay graph .                  Filtered dependency graph
+        codilay team facts .             View shared team knowledge
+        codilay triage-feedback list .   View triage feedback
     """
     # ── Load persistent settings & inject API keys into env ────────
     settings = Settings.load()
@@ -337,6 +361,17 @@ def run(ctx, target):
 
         # Estimate savings
         triage_result.token_estimate_saved = triage.estimate_tokens_saved(triage_result.skip, target)
+
+        # Apply stored triage feedback (Feature 5)
+        try:
+            from codilay.triage_feedback import TriageFeedbackStore
+
+            feedback_store = TriageFeedbackStore(output_dir)
+            overrides_applied = feedback_store.apply_to_triage(triage_result)
+            if overrides_applied > 0:
+                ui.info(f"Applied {overrides_applied} triage feedback overrides")
+        except Exception:
+            pass  # Non-critical
 
         # Show results and get user confirmation
         ui.show_triage_result(triage_result, triage_result.project_type)
@@ -762,6 +797,22 @@ def _finalize_and_write(
 
     state.save(state_path)
 
+    # ── Save doc snapshot for diff-doc (Feature 4) ───────────────
+    try:
+        from codilay.doc_differ import DocVersionStore
+
+        version_store = DocVersionStore(os.path.dirname(codebase_md_path))
+        version_store.save_snapshot(
+            section_index=state.section_index,
+            section_contents=state.section_contents,
+            closed_wires=closed_wires,
+            open_wires=open_wires,
+            run_id=state.run_id,
+            commit=current_commit or "",
+        )
+    except Exception:
+        pass  # Non-critical — don't block the run
+
     # ── Summary ──────────────────────────────────────────────────
     ui.show_summary(
         processed_count=len(state.processed),
@@ -848,6 +899,85 @@ def status(target):
             console.print(f"  [yellow]→[/yellow] {w['from']} → {w['to']} [dim]({w['type']})[/dim]{ctx}")
         if len(state.open_wires) > 15:
             console.print(f"  [dim]  … +{len(state.open_wires) - 15} more[/dim]")
+
+    # ── Feature status ────────────────────────────────────────────────────────
+    feature_rows = []
+
+    # Doc snapshots count
+    snapshots_dir = os.path.join(output_dir, "doc_snapshots")
+    if os.path.isdir(snapshots_dir):
+        snapshot_count = len([f for f in os.listdir(snapshots_dir) if f.endswith(".json")])
+        if snapshot_count > 0:
+            feature_rows.append(("Doc snapshots", str(snapshot_count)))
+
+    # Triage feedback count
+    feedback_path = os.path.join(output_dir, "triage_feedback.json")
+    if os.path.exists(feedback_path):
+        try:
+            with open(feedback_path, "r", encoding="utf-8") as f:
+                feedback_data = json.load(f)
+            fb_count = len(feedback_data.get("entries", []))
+            if fb_count > 0:
+                feature_rows.append(("Triage feedback entries", str(fb_count)))
+        except (json.JSONDecodeError, KeyError):
+            pass
+
+    # Team memory stats
+    team_path = os.path.join(output_dir, "team_memory.json")
+    if os.path.exists(team_path):
+        try:
+            with open(team_path, "r", encoding="utf-8") as f:
+                team_data = json.load(f)
+            facts = len(team_data.get("facts", []))
+            decisions = len(team_data.get("decisions", []))
+            conventions = len(team_data.get("conventions", []))
+            total = facts + decisions + conventions
+            if total > 0:
+                feature_rows.append(("Team memory", f"{facts} facts, {decisions} decisions, {conventions} conventions"))
+        except (json.JSONDecodeError, KeyError):
+            pass
+
+    # Search index status
+    search_index_path = os.path.join(output_dir, "search_index.json")
+    if os.path.exists(search_index_path):
+        try:
+            with open(search_index_path, "r", encoding="utf-8") as f:
+                search_data = json.load(f)
+            indexed_convs = len(search_data.get("documents", []))
+            if indexed_convs > 0:
+                feature_rows.append(("Search index", f"{indexed_convs} conversations indexed"))
+        except (json.JSONDecodeError, KeyError):
+            pass
+
+    # Schedule status
+    schedule_path = os.path.join(output_dir, "schedule.json")
+    if os.path.exists(schedule_path):
+        try:
+            with open(schedule_path, "r", encoding="utf-8") as f:
+                sched_data = json.load(f)
+            if sched_data.get("enabled"):
+                cron_expr = sched_data.get("cron_expression", "unknown")
+                feature_rows.append(("Active schedule", f"cron: {cron_expr}"))
+            else:
+                feature_rows.append(("Schedule", "disabled"))
+        except (json.JSONDecodeError, KeyError):
+            pass
+
+    # Chat conversations count
+    chat_dir = os.path.join(output_dir, "chat")
+    if os.path.isdir(chat_dir):
+        conv_count = len([f for f in os.listdir(chat_dir) if f.endswith(".json")])
+        if conv_count > 0:
+            feature_rows.append(("Chat conversations", str(conv_count)))
+
+    if feature_rows:
+        console.print()
+        feat_table = Table(title="Features", box=box.ROUNDED)
+        feat_table.add_column("Feature", style="cyan")
+        feat_table.add_column("Status", style="green")
+        for name, value in feature_rows:
+            feat_table.add_row(name, value)
+        console.print(feat_table)
 
 
 # ─── Diff command (new — show what would change) ─────────────────────────────
@@ -1048,6 +1178,20 @@ def init(target):
             "model": "claude-sonnet-4-20250514",
             "maxTokensPerCall": 4096,
         },
+        "watch": {
+            "debounce_seconds": 2.0,
+            "extra_ignore": [],
+        },
+        "export": {
+            "default_format": "compact",
+            "max_tokens": 100000,
+        },
+        "schedule": {
+            "enabled": False,
+            "cron": "",
+            "on_commit": False,
+            "branch": "main",
+        },
     }
 
     with open(config_path, "w", encoding="utf-8") as f:
@@ -1055,6 +1199,11 @@ def init(target):
 
     console.print(f"[green]Created config:[/green] {config_path}")
     console.print("[dim]Edit it to customize CodiLay behaviour for this project.[/dim]")
+    console.print()
+    console.print("[dim]Tip: New config sections available:[/dim]")
+    console.print("[dim]  • [bold]watch[/bold]    — debounce settings for watch mode[/dim]")
+    console.print("[dim]  • [bold]export[/bold]   — default format and token limits[/dim]")
+    console.print("[dim]  • [bold]schedule[/bold] — cron and on-commit auto re-runs[/dim]")
 
 
 # ─── Interactive menu ─────────────────────────────────────────────────────────
@@ -1085,6 +1234,51 @@ def interactive(ctx):
 
     elif result and result.get("action") == "serve":
         ctx.invoke(serve, target=result["target"])
+
+    elif result and result.get("action") == "watch":
+        settings.inject_env_vars()
+        ctx.obj["provider"] = settings.default_provider
+        ctx.obj["model"] = settings.default_model
+        ctx.obj["base_url"] = settings.custom_base_url
+        ctx.obj["verbose"] = settings.verbose
+        ctx.invoke(watch, target=result["target"])
+
+    elif result and result.get("action") == "export":
+        ctx.invoke(
+            export_cmd,
+            target=result["target"],
+            fmt=result.get("format", "markdown"),
+        )
+
+    elif result and result.get("action") == "diff-doc":
+        ctx.invoke(diff_doc, target=result["target"])
+
+    elif result and result.get("action") == "search":
+        ctx.invoke(search_cmd, target=result["target"], query=result.get("query", ""))
+
+    elif result and result.get("action") == "schedule-status":
+        # Show schedule status via the schedule_status subcommand
+        ctx.invoke(schedule_status, target=result["target"])
+
+    elif result and result.get("action") == "graph":
+        ctx.invoke(graph_cmd, target=result["target"])
+
+    elif result and result.get("action") == "team":
+        console.print(
+            "[dim]Use the CLI directly for team memory commands:[/dim]\n"
+            "  [bold]codilay team facts " + result["target"] + "[/bold]\n"
+            "  [bold]codilay team add-fact " + result["target"] + "[/bold]\n"
+            "  [bold]codilay team decisions " + result["target"] + "[/bold]\n"
+            "  [bold]codilay team conventions " + result["target"] + "[/bold]\n"
+        )
+
+    elif result and result.get("action") == "triage-feedback":
+        console.print(
+            "[dim]Use the CLI directly for triage feedback commands:[/dim]\n"
+            "  [bold]codilay triage-feedback list " + result["target"] + "[/bold]\n"
+            "  [bold]codilay triage-feedback add " + result["target"] + " <file>[/bold]\n"
+            "  [bold]codilay triage-feedback hint " + result["target"] + " <file>[/bold]\n"
+        )
 
 
 # ─── Setup wizard ─────────────────────────────────────────────────────────────
@@ -1698,3 +1892,978 @@ def _show_memory(console, memory):
             lines.append(f"  {t} ({c}×)")
 
     console.print(Panel("\n".join(lines), border_style="yellow", title="memory"))
+
+
+# ─── Watch command (Feature 1) ───────────────────────────────────────────────
+
+
+@cli.command()
+@click.argument("target", default=".", type=click.Path(exists=True))
+@click.option("--debounce", "-d", default=2.0, help="Debounce delay in seconds")
+@click.option("--verbose", "-v", is_flag=True, help="Verbose output")
+def watch(target, debounce, verbose):
+    """Watch for file changes and auto-update documentation.
+
+    \b
+    Examples:
+        codilay watch .                  Watch current directory
+        codilay watch . --debounce 5     5 second debounce
+    """
+    target = os.path.abspath(target)
+    output_dir = os.path.join(target, "codilay")
+
+    # Validate that docs exist
+    codebase_md = os.path.join(output_dir, "CODEBASE.md")
+    if not os.path.exists(codebase_md):
+        console.print(
+            f"[red]No documentation found at {output_dir}[/red]\n"
+            f"[dim]Run [bold]codilay {target}[/bold] first to generate docs.[/dim]"
+        )
+        return
+
+    try:
+        from codilay.watcher import HAS_WATCHDOG, Watcher
+    except ImportError:
+        console.print(
+            "[red]Could not import watcher module.[/red]\n"
+            "[dim]Install with: [bold]pip install codilay[watch][/bold][/dim]"
+        )
+        return
+
+    if not HAS_WATCHDOG:
+        console.print(
+            "[red]watchdog is not installed.[/red]\n"
+            "[dim]Install with: [bold]pip install watchdog[/bold] "
+            "or [bold]pip install codilay[watch][/bold][/dim]"
+        )
+        return
+
+    # Load ignore patterns from config if available
+    cfg = CodiLayConfig.load(target)
+    ignore_patterns = cfg.ignore_patterns if cfg.ignore_patterns else None
+
+    console.print(
+        Panel(
+            f"[bold]CodiLay Watch Mode[/bold]\n\n"
+            f"  Project:   [cyan]{os.path.basename(target)}[/cyan]\n"
+            f"  Debounce:  [cyan]{debounce}s[/cyan]\n\n"
+            f"[dim]Watching for file changes. Press Ctrl+C to stop.[/dim]",
+            border_style="blue",
+            title="watch",
+        )
+    )
+
+    watcher = Watcher(
+        target_path=target,
+        output_dir=output_dir,
+        debounce=debounce,
+        ignore_patterns=ignore_patterns,
+        verbose=verbose,
+    )
+    watcher.start()
+
+
+# ─── Export command (Feature 3) ──────────────────────────────────────────────
+
+
+@cli.command("export")
+@click.argument("target", default=".", type=click.Path(exists=True))
+@click.option(
+    "--format", "-f", "fmt", default="markdown", type=click.Choice(["markdown", "xml", "json"]), help="Export format"
+)
+@click.option("--max-tokens", "-t", default=None, type=int, help="Token budget limit")
+@click.option("--no-graph", is_flag=True, help="Exclude dependency graph")
+@click.option("--include-unresolved", is_flag=True, help="Include unresolved references")
+@click.option("--output-file", "-o", default=None, help="Write to file instead of stdout")
+def export_cmd(target, fmt, max_tokens, no_graph, include_unresolved, output_file):
+    """Export documentation in a compact, AI-friendly format.
+
+    \b
+    Examples:
+        codilay export .                          Markdown export to stdout
+        codilay export . --format xml             XML format
+        codilay export . -f json -t 8000          JSON with 8k token budget
+        codilay export . -o context.md            Write to file
+    """
+    target = os.path.abspath(target)
+    output_dir = os.path.join(target, "codilay")
+
+    from codilay.exporter import export_for_ai
+
+    try:
+        result = export_for_ai(
+            output_dir=output_dir,
+            fmt=fmt,
+            max_tokens=max_tokens,
+            include_graph=not no_graph,
+        )
+    except FileNotFoundError as e:
+        console.print(f"[red]{e}[/red]")
+        return
+
+    if output_file:
+        with open(output_file, "w", encoding="utf-8") as f:
+            f.write(result)
+        console.print(f"[green]Exported to {output_file}[/green] ({len(result):,} chars)")
+    else:
+        console.print(result)
+
+
+# ─── Doc Diff command (Feature 4) ────────────────────────────────────────────
+
+
+@cli.command("diff-doc")
+@click.argument("target", default=".", type=click.Path(exists=True))
+@click.option("--json-output", is_flag=True, help="Output as JSON")
+def diff_doc(target, json_output):
+    """Show what changed in the documentation between the last two runs.
+
+    \b
+    Unlike `codilay diff` which shows git file changes, this shows
+    section-level content changes in the generated documentation.
+
+    \b
+    Examples:
+        codilay diff-doc .                Show doc changelog
+        codilay diff-doc . --json-output  Machine-readable output
+    """
+    target = os.path.abspath(target)
+    output_dir = os.path.join(target, "codilay")
+
+    from codilay.doc_differ import DocVersionStore
+
+    store = DocVersionStore(output_dir)
+    snapshots = store.list_snapshots()
+
+    if len(snapshots) < 2:
+        console.print(
+            "[yellow]Need at least 2 documentation snapshots to show a diff.[/yellow]\n"
+            "[dim]Run [bold]codilay .[/bold] at least twice to compare versions.[/dim]"
+        )
+        return
+
+    result = store.diff_latest()
+    if result is None:
+        console.print("[red]Could not compute documentation diff.[/red]")
+        return
+
+    if json_output:
+        console.print(json.dumps(result.to_dict(), indent=2))
+        return
+
+    if not result.has_changes:
+        console.print("[green]No documentation content changes between the last two runs.[/green]")
+        return
+
+    # Header
+    console.print(
+        Panel(
+            f"[bold]Documentation Changelog[/bold]\n"
+            f"From: [dim]{result.old_run_time or 'unknown'}[/dim]  →  "
+            f"To: [dim]{result.new_run_time or 'unknown'}[/dim]\n"
+            f"Sections: {result.sections_delta:+d} | "
+            f"Wires closed: {result.new_closed_wires:+d} | "
+            f"Wires opened: {result.new_open_wires:+d}",
+            border_style="blue",
+        )
+    )
+
+    # Added sections
+    if result.added_sections:
+        console.print(f"\n[bold green]+ {len(result.added_sections)} sections added:[/bold green]")
+        for sc in result.added_sections:
+            console.print(f"  [green]+[/green] {sc.title} [dim]({sc.section_id})[/dim]")
+
+    # Removed sections
+    if result.removed_sections:
+        console.print(f"\n[bold red]- {len(result.removed_sections)} sections removed:[/bold red]")
+        for sc in result.removed_sections:
+            console.print(f"  [red]-[/red] {sc.title} [dim]({sc.section_id})[/dim]")
+
+    # Modified sections
+    if result.modified_sections:
+        console.print(f"\n[bold yellow]~ {len(result.modified_sections)} sections modified:[/bold yellow]")
+        for sc in result.modified_sections:
+            console.print(f"  [yellow]~[/yellow] {sc.title} [dim]({sc.section_id})[/dim]")
+            if sc.summary:
+                console.print(f"    {sc.summary}")
+            # Show a few diff lines
+            for dl in sc.diff_lines[:5]:
+                if dl.startswith("+"):
+                    console.print(f"    [green]{dl}[/green]")
+                elif dl.startswith("-"):
+                    console.print(f"    [red]{dl}[/red]")
+            if len(sc.diff_lines) > 5:
+                console.print(f"    [dim]… +{len(sc.diff_lines) - 5} more lines[/dim]")
+
+    console.print(f"\n[bold]Total: {result.total_section_changes} section changes[/bold]")
+
+
+# ─── Triage Feedback command (Feature 5) ─────────────────────────────────────
+
+
+@cli.group("triage-feedback")
+def triage_feedback_group():
+    """Manage triage feedback to improve file classification.
+
+    \b
+    Examples:
+        codilay triage-feedback add src/utils.py skip core "Important utility"
+        codilay triage-feedback list
+        codilay triage-feedback clear
+    """
+    pass
+
+
+@triage_feedback_group.command("add")
+@click.argument("target", default=".", type=click.Path(exists=True))
+@click.argument("file_path")
+@click.argument("original", type=click.Choice(["core", "skim", "skip"]))
+@click.argument("corrected", type=click.Choice(["core", "skim", "skip"]))
+@click.option("--reason", "-r", default="", help="Reason for the correction")
+@click.option("--pattern", is_flag=True, help="Treat file_path as a glob pattern")
+def triage_feedback_add(target, file_path, original, corrected, reason, pattern):
+    """Record a triage correction for a file or pattern."""
+    target = os.path.abspath(target)
+    output_dir = os.path.join(target, "codilay")
+
+    from codilay.triage_feedback import TriageFeedbackStore
+
+    store = TriageFeedbackStore(output_dir)
+    entry = store.add_feedback(file_path, original, corrected, reason=reason, is_pattern=pattern)
+    console.print(
+        f"[green]Recorded:[/green] {entry.file_path}: "
+        f"{entry.original_category} → [bold]{entry.corrected_category}[/bold]"
+    )
+    if reason:
+        console.print(f"  [dim]Reason: {reason}[/dim]")
+
+
+@triage_feedback_group.command("list")
+@click.argument("target", default=".", type=click.Path(exists=True))
+def triage_feedback_list(target):
+    """Show all stored triage feedback."""
+    target = os.path.abspath(target)
+    output_dir = os.path.join(target, "codilay")
+
+    from codilay.triage_feedback import TriageFeedbackStore
+
+    store = TriageFeedbackStore(output_dir)
+    entries = store.list_feedback()
+
+    if not entries:
+        console.print("[dim]No triage feedback recorded.[/dim]")
+        return
+
+    table = Table(title="Triage Feedback", box=box.ROUNDED)
+    table.add_column("File / Pattern", style="cyan")
+    table.add_column("Original", style="red")
+    table.add_column("Corrected", style="green")
+    table.add_column("Reason", style="dim")
+    table.add_column("Type", style="dim")
+
+    for e in entries:
+        table.add_row(
+            e.file_path,
+            e.original_category,
+            e.corrected_category,
+            e.reason or "-",
+            "pattern" if e.is_pattern else "file",
+        )
+
+    console.print(table)
+
+    hints = store.get_project_hints()
+    if hints:
+        console.print("\n[bold]Project hints:[/bold]")
+        for pt, hint in hints.items():
+            console.print(f"  [cyan]{pt}[/cyan]: {hint}")
+
+
+@triage_feedback_group.command("hint")
+@click.argument("target", default=".", type=click.Path(exists=True))
+@click.argument("project_type")
+@click.argument("hint")
+def triage_feedback_hint(target, project_type, hint):
+    """Set a triage hint for a project type.
+
+    \b
+    Example:
+        codilay triage-feedback hint . django "Always include migration files"
+    """
+    target = os.path.abspath(target)
+    output_dir = os.path.join(target, "codilay")
+
+    from codilay.triage_feedback import TriageFeedbackStore
+
+    store = TriageFeedbackStore(output_dir)
+    store.set_project_hint(project_type, hint)
+    console.print(f"[green]Hint set for [cyan]{project_type}[/cyan]:[/green] {hint}")
+
+
+@triage_feedback_group.command("clear")
+@click.argument("target", default=".", type=click.Path(exists=True))
+@click.option("--yes", "-y", is_flag=True, help="Skip confirmation")
+def triage_feedback_clear(target, yes):
+    """Clear all triage feedback."""
+    target = os.path.abspath(target)
+    output_dir = os.path.join(target, "codilay")
+
+    from codilay.triage_feedback import TriageFeedbackStore
+
+    store = TriageFeedbackStore(output_dir)
+
+    if not yes:
+        count = len(store.list_feedback())
+        if count == 0:
+            console.print("[dim]No feedback to clear.[/dim]")
+            return
+        if not click.confirm(f"Clear {count} feedback entries?", default=False):
+            console.print("[dim]Cancelled.[/dim]")
+            return
+
+    store.clear_feedback()
+    console.print("[green]All triage feedback cleared.[/green]")
+
+
+@triage_feedback_group.command("remove")
+@click.argument("target", default=".", type=click.Path(exists=True))
+@click.argument("file_path")
+def triage_feedback_remove(target, file_path):
+    """Remove feedback for a specific file or pattern."""
+    target = os.path.abspath(target)
+    output_dir = os.path.join(target, "codilay")
+
+    from codilay.triage_feedback import TriageFeedbackStore
+
+    store = TriageFeedbackStore(output_dir)
+    if store.remove_feedback(file_path):
+        console.print(f"[green]Removed feedback for {file_path}[/green]")
+    else:
+        console.print(f"[yellow]No feedback found for {file_path}[/yellow]")
+
+
+# ─── Graph command (Feature 7) ───────────────────────────────────────────────
+
+
+@cli.command("graph")
+@click.argument("target", default=".", type=click.Path(exists=True))
+@click.option("--wire-type", "-w", multiple=True, help="Filter by wire type (can repeat)")
+@click.option("--layer", "-l", multiple=True, help="Filter by layer/directory")
+@click.option("--module", "-M", multiple=True, help="Filter by module/file")
+@click.option("--exclude", "-x", multiple=True, help="Exclude files matching pattern")
+@click.option(
+    "--direction",
+    "-d",
+    default="both",
+    type=click.Choice(["incoming", "outgoing", "both"]),
+    help="Edge direction filter",
+)
+@click.option("--min-connections", default=0, type=int, help="Minimum connections to show a node")
+@click.option("--json-output", is_flag=True, help="Output as JSON")
+@click.option("--list-filters", is_flag=True, help="Show available filter values")
+def graph_cmd(target, wire_type, layer, module, exclude, direction, min_connections, json_output, list_filters):
+    """View and filter the dependency graph.
+
+    \b
+    Examples:
+        codilay graph .                              Full graph
+        codilay graph . --list-filters               Show available filter values
+        codilay graph . -w import -w call             Only imports and calls
+        codilay graph . -l src/services               Only files in src/services
+        codilay graph . --min-connections 3           Hide isolated nodes
+        codilay graph . --json-output                 Machine-readable output
+    """
+    target = os.path.abspath(target)
+    output_dir = os.path.join(target, "codilay")
+    links_path = os.path.join(output_dir, "links.json")
+
+    if not os.path.exists(links_path):
+        console.print(
+            f"[red]No links.json found at {output_dir}[/red]\n"
+            f"[dim]Run [bold]codilay {target}[/bold] first to generate docs.[/dim]"
+        )
+        return
+
+    with open(links_path, "r", encoding="utf-8") as f:
+        links = json.load(f)
+
+    from codilay.graph_filter import GraphFilter, GraphFilterOptions
+
+    gf = GraphFilter(
+        closed_wires=links.get("closed", []),
+        open_wires=links.get("open", []),
+    )
+
+    if list_filters:
+        available = gf.get_available_filters()
+        console.print("[bold]Available filter values:[/bold]\n")
+        console.print("[cyan]Wire types:[/cyan]")
+        for wt in available.get("wire_types", []):
+            console.print(f"  {wt}")
+        console.print("\n[cyan]Layers (directories):[/cyan]")
+        for ly in available.get("layers", []):
+            console.print(f"  {ly}")
+        console.print(f"\n[cyan]Files:[/cyan] {len(available.get('files', []))} total")
+        return
+
+    options = GraphFilterOptions(
+        wire_types=list(wire_type) if wire_type else None,
+        layers=list(layer) if layer else None,
+        modules=list(module) if module else None,
+        exclude_files=list(exclude) if exclude else None,
+        direction=direction,
+        min_connections=min_connections,
+    )
+
+    result = gf.filter(options)
+
+    if json_output:
+        console.print(json.dumps(result.to_dict(), indent=2))
+        return
+
+    # Display summary
+    console.print(
+        Panel(
+            f"[bold]Dependency Graph[/bold]\n"
+            f"  Nodes: [cyan]{len(result.nodes)}[/cyan] | "
+            f"Edges: [cyan]{len(result.edges)}[/cyan] | "
+            f"Filtered: {result.filtered_wires}/{result.total_wires} wires",
+            border_style="blue",
+        )
+    )
+
+    if not result.edges:
+        console.print("[dim]No edges match the current filters.[/dim]")
+        return
+
+    # Show edges
+    table = Table(box=box.SIMPLE, show_header=True)
+    table.add_column("Source", style="cyan", max_width=40)
+    table.add_column("→", style="dim", width=2)
+    table.add_column("Target", style="green", max_width=40)
+    table.add_column("Type", style="yellow")
+
+    for edge in result.edges[:50]:
+        table.add_row(edge.source, "→", edge.target, edge.wire_type)
+
+    console.print(table)
+
+    if len(result.edges) > 50:
+        console.print(f"[dim]… +{len(result.edges) - 50} more edges (use --json-output to see all)[/dim]")
+
+    # Show nodes with most connections
+    if result.nodes:
+        top_nodes = sorted(result.nodes, key=lambda n: n.incoming + n.outgoing, reverse=True)[:10]
+        console.print("\n[bold]Most connected nodes:[/bold]")
+        for node in top_nodes:
+            console.print(
+                f"  [cyan]{node.path}[/cyan] — {node.incoming} in, {node.outgoing} out [dim]({node.layer})[/dim]"
+            )
+
+
+# ─── Team Memory command (Feature 8) ─────────────────────────────────────────
+
+
+@cli.group("team")
+def team_group():
+    """Manage shared team knowledge base.
+
+    \b
+    Examples:
+        codilay team facts .
+        codilay team add-fact . "The auth module uses JWT tokens" --category architecture
+        codilay team decisions .
+        codilay team conventions .
+    """
+    pass
+
+
+@team_group.command("facts")
+@click.argument("target", default=".", type=click.Path(exists=True))
+@click.option("--category", "-c", default=None, help="Filter by category")
+def team_facts(target, category):
+    """List all team facts."""
+    target = os.path.abspath(target)
+    output_dir = os.path.join(target, "codilay")
+
+    from codilay.team_memory import TeamMemory
+
+    tm = TeamMemory(output_dir)
+    facts = tm.list_facts(category=category)
+
+    if not facts:
+        console.print("[dim]No team facts recorded.[/dim]")
+        return
+
+    table = Table(title="Team Facts", box=box.ROUNDED)
+    table.add_column("ID", style="dim", max_width=8)
+    table.add_column("Fact", style="cyan")
+    table.add_column("Category", style="yellow")
+    table.add_column("Votes", justify="right")
+    table.add_column("Author", style="dim")
+
+    for f in facts:
+        votes = f.get("votes_up", 0) - f.get("votes_down", 0)
+        vote_str = f"[green]+{votes}[/green]" if votes >= 0 else f"[red]{votes}[/red]"
+        table.add_row(
+            f["id"][:8],
+            f["fact"],
+            f.get("category", "general"),
+            vote_str,
+            f.get("author", "-"),
+        )
+
+    console.print(table)
+
+
+@team_group.command("add-fact")
+@click.argument("target", default=".", type=click.Path(exists=True))
+@click.argument("fact")
+@click.option("--category", "-c", default="general", help="Fact category")
+@click.option("--author", "-a", default="", help="Author name")
+@click.option("--tag", "-t", multiple=True, help="Tags (can repeat)")
+def team_add_fact(target, fact, category, author, tag):
+    """Add a fact to the team knowledge base."""
+    target = os.path.abspath(target)
+    output_dir = os.path.join(target, "codilay")
+
+    from codilay.team_memory import TeamMemory
+
+    tm = TeamMemory(output_dir)
+    entry = tm.add_fact(fact, category=category, author=author, tags=list(tag) if tag else None)
+    console.print(f"[green]Fact added:[/green] {entry['fact']} [dim]({entry['id'][:8]})[/dim]")
+
+
+@team_group.command("vote")
+@click.argument("target", default=".", type=click.Path(exists=True))
+@click.argument("fact_id")
+@click.argument("direction", type=click.Choice(["up", "down"]))
+def team_vote(target, fact_id, direction):
+    """Vote on a fact (up or down)."""
+    target = os.path.abspath(target)
+    output_dir = os.path.join(target, "codilay")
+
+    from codilay.team_memory import TeamMemory
+
+    tm = TeamMemory(output_dir)
+    # Match partial ID
+    all_facts = tm.list_facts()
+    full_id = None
+    for f in all_facts:
+        if f["id"].startswith(fact_id):
+            full_id = f["id"]
+            break
+
+    if not full_id:
+        console.print(f"[red]No fact matching '{fact_id}'[/red]")
+        return
+
+    if tm.vote_fact(full_id, direction):
+        console.print(f"[green]Voted {direction} on fact {fact_id[:8]}[/green]")
+    else:
+        console.print(f"[red]Could not vote on fact[/red]")
+
+
+@team_group.command("decisions")
+@click.argument("target", default=".", type=click.Path(exists=True))
+@click.option(
+    "--status", "-s", default=None, type=click.Choice(["active", "superseded", "deprecated"]), help="Filter by status"
+)
+def team_decisions(target, status):
+    """List team decisions."""
+    target = os.path.abspath(target)
+    output_dir = os.path.join(target, "codilay")
+
+    from codilay.team_memory import TeamMemory
+
+    tm = TeamMemory(output_dir)
+    decisions = tm.list_decisions(status=status)
+
+    if not decisions:
+        console.print("[dim]No team decisions recorded.[/dim]")
+        return
+
+    table = Table(title="Team Decisions", box=box.ROUNDED)
+    table.add_column("ID", style="dim", max_width=8)
+    table.add_column("Title", style="cyan")
+    table.add_column("Status", style="yellow")
+    table.add_column("Author", style="dim")
+    table.add_column("Date", style="dim")
+
+    for d in decisions:
+        table.add_row(
+            d["id"][:8],
+            d["title"],
+            d.get("status", "active"),
+            d.get("author", "-"),
+            d.get("created_at", "")[:10],
+        )
+
+    console.print(table)
+
+
+@team_group.command("add-decision")
+@click.argument("target", default=".", type=click.Path(exists=True))
+@click.argument("title")
+@click.argument("description")
+@click.option("--author", "-a", default="", help="Author name")
+@click.option("--file", "-f", "related_files", multiple=True, help="Related files (can repeat)")
+def team_add_decision(target, title, description, author, related_files):
+    """Record a team decision."""
+    target = os.path.abspath(target)
+    output_dir = os.path.join(target, "codilay")
+
+    from codilay.team_memory import TeamMemory
+
+    tm = TeamMemory(output_dir)
+    entry = tm.add_decision(
+        title, description, author=author, related_files=list(related_files) if related_files else None
+    )
+    console.print(f"[green]Decision recorded:[/green] {entry['title']} [dim]({entry['id'][:8]})[/dim]")
+
+
+@team_group.command("conventions")
+@click.argument("target", default=".", type=click.Path(exists=True))
+def team_conventions(target):
+    """List team conventions."""
+    target = os.path.abspath(target)
+    output_dir = os.path.join(target, "codilay")
+
+    from codilay.team_memory import TeamMemory
+
+    tm = TeamMemory(output_dir)
+    conventions = tm.list_conventions()
+
+    if not conventions:
+        console.print("[dim]No team conventions recorded.[/dim]")
+        return
+
+    for c in conventions:
+        console.print(f"\n[bold cyan]{c['name']}[/bold cyan]")
+        console.print(f"  {c['description']}")
+        if c.get("examples"):
+            for ex in c["examples"]:
+                console.print(f"    [dim]• {ex}[/dim]")
+
+
+@team_group.command("add-convention")
+@click.argument("target", default=".", type=click.Path(exists=True))
+@click.argument("name")
+@click.argument("description")
+@click.option("--example", "-e", multiple=True, help="Examples (can repeat)")
+@click.option("--author", "-a", default="", help="Author name")
+def team_add_convention(target, name, description, example, author):
+    """Add a coding convention."""
+    target = os.path.abspath(target)
+    output_dir = os.path.join(target, "codilay")
+
+    from codilay.team_memory import TeamMemory
+
+    tm = TeamMemory(output_dir)
+    entry = tm.add_convention(name, description, examples=list(example) if example else None, author=author)
+    console.print(f"[green]Convention added:[/green] {entry['name']}")
+
+
+@team_group.command("annotate")
+@click.argument("target", default=".", type=click.Path(exists=True))
+@click.argument("file_path")
+@click.argument("note")
+@click.option("--author", "-a", default="", help="Author name")
+@click.option("--lines", "-l", default=None, help="Line range (e.g., '10-25')")
+def team_annotate(target, file_path, note, author, lines):
+    """Add a note about a specific file."""
+    target = os.path.abspath(target)
+    output_dir = os.path.join(target, "codilay")
+
+    from codilay.team_memory import TeamMemory
+
+    tm = TeamMemory(output_dir)
+    entry = tm.add_annotation(file_path, note, author=author, line_range=lines)
+    console.print(f"[green]Annotation added for [cyan]{file_path}[/cyan][/green]")
+
+
+@team_group.command("annotations")
+@click.argument("target", default=".", type=click.Path(exists=True))
+@click.option("--file", "-f", "file_path", default=None, help="Filter by file")
+def team_annotations(target, file_path):
+    """List file annotations."""
+    target = os.path.abspath(target)
+    output_dir = os.path.join(target, "codilay")
+
+    from codilay.team_memory import TeamMemory
+
+    tm = TeamMemory(output_dir)
+    annotations = tm.get_annotations(file_path=file_path)
+
+    if not annotations:
+        console.print("[dim]No annotations found.[/dim]")
+        return
+
+    for a in annotations:
+        line_info = f" (lines {a['line_range']})" if a.get("line_range") else ""
+        console.print(f"  [cyan]{a['file_path']}{line_info}[/cyan]: {a['note']} [dim]— {a.get('author', 'anon')}[/dim]")
+
+
+@team_group.command("users")
+@click.argument("target", default=".", type=click.Path(exists=True))
+def team_users(target):
+    """List registered team members."""
+    target = os.path.abspath(target)
+    output_dir = os.path.join(target, "codilay")
+
+    from codilay.team_memory import TeamMemory
+
+    tm = TeamMemory(output_dir)
+    users = tm.list_users()
+
+    if not users:
+        console.print("[dim]No team members registered.[/dim]")
+        return
+
+    for u in users:
+        display = u.get("display_name", u["username"])
+        console.print(f"  [cyan]{display}[/cyan] [dim](@{u['username']})[/dim]")
+
+
+@team_group.command("add-user")
+@click.argument("target", default=".", type=click.Path(exists=True))
+@click.argument("username")
+@click.option("--display-name", "-n", default="", help="Display name")
+def team_add_user(target, username, display_name):
+    """Register a team member."""
+    target = os.path.abspath(target)
+    output_dir = os.path.join(target, "codilay")
+
+    from codilay.team_memory import TeamMemory
+
+    tm = TeamMemory(output_dir)
+    user = tm.register_user(username, display_name=display_name)
+    console.print(f"[green]User registered:[/green] @{user['username']}")
+
+
+# ─── Search command (Feature 9) ──────────────────────────────────────────────
+
+
+@cli.command("search")
+@click.argument("target", default=".", type=click.Path(exists=True))
+@click.argument("query")
+@click.option("--top", "-k", default=10, type=int, help="Number of results")
+@click.option("--role", "-r", default=None, type=click.Choice(["user", "assistant"]), help="Filter by message role")
+@click.option("--conversation", "-c", default=None, help="Limit to specific conversation ID")
+@click.option("--rebuild", is_flag=True, help="Rebuild the search index before searching")
+def search_cmd(target, query, top, role, conversation, rebuild):
+    """Search across all past conversations.
+
+    \b
+    Examples:
+        codilay search . "authentication flow"
+        codilay search . "error handling" --role assistant
+        codilay search . "database" -k 5
+        codilay search . "deploy" --rebuild
+    """
+    target = os.path.abspath(target)
+    output_dir = os.path.join(target, "codilay")
+
+    from codilay.search import ConversationSearch
+
+    searcher = ConversationSearch(output_dir)
+
+    if rebuild or not searcher.load_index():
+        with console.status("[dim]Building search index...[/dim]"):
+            searcher.build_index()
+
+    results = searcher.search(
+        query=query,
+        top_k=top,
+        role_filter=role,
+        conv_id_filter=conversation,
+    )
+
+    if not results.results:
+        console.print(f"[dim]No results for '{query}'.[/dim]")
+        console.print(
+            f"[dim]Searched {results.total_conversations_searched} conversations, "
+            f"{results.total_messages_searched} messages.[/dim]"
+        )
+        return
+
+    console.print(
+        f"\n[bold]Search results for '{query}'[/bold] "
+        f"({len(results.results)} hits from "
+        f"{results.total_conversations_searched} conversations)\n"
+    )
+
+    for i, r in enumerate(results.results, 1):
+        role_badge = "[green]You[/green]" if r.role == "user" else "[blue]CodiLay[/blue]"
+        deep_badge = " [yellow]deep[/yellow]" if r.escalated else ""
+        console.print(
+            f"  [bold]{i}.[/bold] {role_badge}{deep_badge} "
+            f"[dim]({r.conversation_title})[/dim] "
+            f"[dim]score: {r.score:.2f}[/dim]"
+        )
+        console.print(f"     {r.snippet}")
+        console.print()
+
+
+# ─── Schedule command (Feature 10) ───────────────────────────────────────────
+
+
+@cli.group("schedule")
+def schedule_group():
+    """Schedule automatic documentation updates.
+
+    \b
+    Examples:
+        codilay schedule set . --cron "0 2 * * *"    Daily at 2 AM
+        codilay schedule set . --on-commit            On new commits
+        codilay schedule status .
+        codilay schedule start .
+        codilay schedule stop .
+    """
+    pass
+
+
+@schedule_group.command("set")
+@click.argument("target", default=".", type=click.Path(exists=True))
+@click.option("--cron", default=None, help="Cron expression (5 fields)")
+@click.option("--on-commit", is_flag=True, help="Trigger on new commits")
+@click.option("--branch", "-b", default="main", help="Branch to monitor")
+def schedule_set(target, cron, on_commit, branch):
+    """Configure a schedule for automatic documentation updates."""
+    target = os.path.abspath(target)
+    output_dir = os.path.join(target, "codilay")
+    os.makedirs(output_dir, exist_ok=True)
+
+    from codilay.scheduler import ScheduleConfig
+
+    config = ScheduleConfig(output_dir)
+
+    if cron:
+        try:
+            config.set_cron(cron, branch=branch)
+            console.print(f"[green]Cron schedule set:[/green] [cyan]{cron}[/cyan] on branch [cyan]{branch}[/cyan]")
+        except ValueError as e:
+            console.print(f"[red]Invalid cron expression: {e}[/red]")
+            return
+    elif on_commit:
+        config.set_on_commit(branch=branch)
+        console.print(f"[green]Commit-triggered schedule set[/green] on branch [cyan]{branch}[/cyan]")
+    else:
+        console.print("[yellow]Specify --cron or --on-commit[/yellow]")
+        return
+
+
+@schedule_group.command("disable")
+@click.argument("target", default=".", type=click.Path(exists=True))
+def schedule_disable(target):
+    """Disable the schedule."""
+    target = os.path.abspath(target)
+    output_dir = os.path.join(target, "codilay")
+
+    from codilay.scheduler import ScheduleConfig
+
+    config = ScheduleConfig(output_dir)
+    config.disable()
+    console.print("[green]Schedule disabled.[/green]")
+
+
+@schedule_group.command("status")
+@click.argument("target", default=".", type=click.Path(exists=True))
+def schedule_status(target):
+    """Show current schedule configuration."""
+    target = os.path.abspath(target)
+    output_dir = os.path.join(target, "codilay")
+
+    from codilay.scheduler import ScheduleConfig, read_pid_file
+
+    config = ScheduleConfig(output_dir)
+    cfg = config.load()
+
+    if not cfg.get("enabled", False):
+        console.print("[dim]No active schedule.[/dim]")
+        return
+
+    mode = cfg.get("mode", "disabled")
+    console.print(f"[bold]Schedule:[/bold] [green]enabled[/green]")
+    console.print(f"  Mode: [cyan]{mode}[/cyan]")
+    if mode == "cron":
+        console.print(f"  Expression: [cyan]{cfg.get('cron', '')}[/cyan]")
+    console.print(f"  Branch: [cyan]{cfg.get('branch', 'main')}[/cyan]")
+
+    if cfg.get("last_run"):
+        console.print(f"  Last run: [dim]{cfg['last_run']}[/dim]")
+    if cfg.get("last_commit"):
+        console.print(f"  Last commit: [dim]{cfg['last_commit'][:8]}[/dim]")
+
+    pid = read_pid_file(output_dir)
+    if pid:
+        console.print(f"  Scheduler PID: [cyan]{pid}[/cyan] [green](running)[/green]")
+    else:
+        console.print(f"  Scheduler: [yellow]not running[/yellow]")
+
+
+@schedule_group.command("start")
+@click.argument("target", default=".", type=click.Path(exists=True))
+@click.option("--verbose", "-v", is_flag=True, help="Verbose output")
+def schedule_start(target, verbose):
+    """Start the scheduler (runs in foreground).
+
+    \b
+    Use with a process manager (systemd, pm2, tmux) for background operation.
+    """
+    target = os.path.abspath(target)
+    output_dir = os.path.join(target, "codilay")
+
+    from codilay.scheduler import ScheduleConfig, Scheduler
+
+    config = ScheduleConfig(output_dir)
+    cfg = config.load()
+
+    if not cfg.get("enabled", False):
+        console.print(
+            "[yellow]No schedule configured.[/yellow]\n[dim]Run [bold]codilay schedule set[/bold] first.[/dim]"
+        )
+        return
+
+    console.print(
+        Panel(
+            f"[bold]CodiLay Scheduler[/bold]\n\n"
+            f"  Project:  [cyan]{os.path.basename(target)}[/cyan]\n"
+            f"  Mode:     [cyan]{cfg.get('mode', 'unknown')}[/cyan]\n"
+            f"  Branch:   [cyan]{cfg.get('branch', 'main')}[/cyan]\n\n"
+            f"[dim]Press Ctrl+C to stop.[/dim]",
+            border_style="blue",
+            title="scheduler",
+        )
+    )
+
+    scheduler = Scheduler(target_path=target, output_dir=output_dir, verbose=verbose)
+    scheduler.start()
+
+
+@schedule_group.command("stop")
+@click.argument("target", default=".", type=click.Path(exists=True))
+def schedule_stop(target):
+    """Stop a running scheduler by PID."""
+    import signal
+
+    target = os.path.abspath(target)
+    output_dir = os.path.join(target, "codilay")
+
+    from codilay.scheduler import read_pid_file, remove_pid_file
+
+    pid = read_pid_file(output_dir)
+    if not pid:
+        console.print("[dim]No scheduler running (no PID file found).[/dim]")
+        return
+
+    try:
+        os.kill(pid, signal.SIGTERM)
+        remove_pid_file(output_dir)
+        console.print(f"[green]Sent SIGTERM to scheduler (PID {pid}).[/green]")
+    except ProcessLookupError:
+        remove_pid_file(output_dir)
+        console.print(f"[yellow]Scheduler (PID {pid}) was not running. Cleaned up PID file.[/yellow]")
+    except PermissionError:
+        console.print(f"[red]Permission denied sending signal to PID {pid}.[/red]")
