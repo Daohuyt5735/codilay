@@ -14,7 +14,7 @@
       "context": "Used to check out the repository at the start of the job",
       "opened_at": ".github/workflows/ci.yml",
       "classification": "external_package",
-      "classification_note": "GitHub Actions | Needed to check out source code for CI process."
+      "classification_note": "This refers to a dependency in GitHub Actions workflow for checking out repositories."
     },
     {
       "id": "wire_001",
@@ -24,7 +24,7 @@
       "context": "Used to set up Python environments with caching for pip",
       "opened_at": ".github/workflows/ci.yml",
       "classification": "external_package",
-      "classification_note": "Setup Python environments in CI using GitHub Actions."
+      "classification_note": "An external GitHub Action to set up Python, indicating use of CI/CD pipelines."
     },
     {
       "id": "wire_002",
@@ -34,7 +34,7 @@
       "context": "Static code analysis and formatting enforcement",
       "opened_at": ".github/workflows/ci.yml",
       "classification": "external_package",
-      "classification_note": "Static analysis tool used in CI pipeline."
+      "classification_note": "Ruff is a tool for code linting."
     },
     {
       "id": "wire_003",
@@ -44,7 +44,7 @@
       "context": "Testing framework used to run the project's test suite",
       "opened_at": ".github/workflows/ci.yml",
       "classification": "external_package",
-      "classification_note": "Testing framework for running unit tests."
+      "classification_note": "Pytest is a testing tool commonly used for running tests."
     },
     {
       "id": "wire_007",
@@ -53,8 +53,8 @@
       "type": "import",
       "context": "CLI support for multiple LLM providers and base URL setting",
       "opened_at": "multi_provider_support.md",
-      "classification": "unknown",
-      "classification_note": "CLI interaction with external file path not covered in the project scope."
+      "classification": "missing_file",
+      "classification_note": "Referenced in the multi_provider_support.md but the actual implementation is missing from the provided directory structure."
     },
     {
       "id": "wire_011",
@@ -63,8 +63,8 @@
       "type": "import",
       "context": "File containing CLI enhancements to support the new features.",
       "opened_at": "persistent_settings_summary.md",
-      "classification": "unknown",
-      "classification_note": "CLI enhancement reference in an external path document."
+      "classification": "missing_file",
+      "classification_note": "Persistent settings enhancements point to the CLI file that's not present."
     },
     {
       "id": "wire_012",
@@ -73,8 +73,8 @@
       "type": "import",
       "context": "Imports the CLI module to execute command-line commands when CodiLay is run as a module.",
       "opened_at": "src/codilay/__main__.py",
-      "classification": "config_dependency",
-      "classification_note": "Imports CLI module for main execution flow."
+      "classification": "missing_file",
+      "classification_note": "The main CodiLay script attempts to import cli, which is not found in current paths."
     },
     {
       "id": "wire_013",
@@ -83,8 +83,8 @@
       "type": "call",
       "context": "Calls the `cli` function to start the CodiLay command-line interface.",
       "opened_at": "src/codilay/__main__.py",
-      "classification": "config_dependency",
-      "classification_note": "Direct invocation of CLI function within main entry point."
+      "classification": "missing_file",
+      "classification_note": "Call to a cli function within main that appears to be missing."
     },
     {
       "id": "wire_014",
@@ -94,7 +94,7 @@
       "context": "Used for computing diffs between versions of documentation content",
       "opened_at": "src/codilay/doc_differ.py",
       "classification": "external_package",
-      "classification_note": "Python standard library for computing text differences."
+      "classification_note": "Standard library used for diff operations in Python."
     },
     {
       "id": "wire_015",
@@ -104,7 +104,7 @@
       "context": "Handles serialization and deserialization of documentation state snapshots",
       "opened_at": "src/codilay/doc_differ.py",
       "classification": "external_package",
-      "classification_note": "Used for JSON operations within the doc differ module."
+      "classification_note": "Standard library for JSON operations."
     },
     {
       "id": "wire_016",
@@ -114,7 +114,7 @@
       "context": "Facilitates file management and directory operations for storing snapshots",
       "opened_at": "src/codilay/doc_differ.py",
       "classification": "external_package",
-      "classification_note": "Standard library for file and directory manipulations."
+      "classification_note": "Standard system library to handle filesystem operations."
     },
     {
       "id": "wire_017",
@@ -124,7 +124,7 @@
       "context": "Supports regular expression operations to identify code references within documentation",
       "opened_at": "src/codilay/doc_differ.py",
       "classification": "external_package",
-      "classification_note": "Utilizes regular expressions for searching within documentation."
+      "classification_note": "Regular expressions library, part of Python's standard distribution."
     },
     {
       "id": "wire_018",
@@ -134,7 +134,7 @@
       "context": "Provides the data class decorator for structured data storage",
       "opened_at": "src/codilay/doc_differ.py",
       "classification": "external_package",
-      "classification_note": "Data class decorations facilitating structured data use."
+      "classification_note": "Part of Python's native support for data classes."
     },
     {
       "id": "wire_019",
@@ -144,7 +144,7 @@
       "context": "Used for timestamping snapshots of documentation state",
       "opened_at": "src/codilay/doc_differ.py",
       "classification": "external_package",
-      "classification_note": "Date and time functionality for documentation changes."
+      "classification_note": "Utility from Python's standard library to handle date and time challenges."
     },
     {
       "id": "wire_020",
@@ -154,7 +154,7 @@
       "context": "Import rate-limit error class to handle Anthropic-specific API rate limits.",
       "opened_at": "src/codilay/llm_client.py",
       "classification": "external_package",
-      "classification_note": "Handles Anthropic API error response."
+      "classification_note": "Anthropic is likely an integration for an external LLM service."
     },
     {
       "id": "wire_021",
@@ -164,7 +164,7 @@
       "context": "Import rate-limit error class to handle OpenAI-specific API rate limits.",
       "opened_at": "src/codilay/llm_client.py",
       "classification": "external_package",
-      "classification_note": "Handles OpenAI API error response."
+      "classification_note": "Indicates an integration with the OpenAI library for AI capabilities."
     },
     {
       "id": "wire_022",
@@ -174,7 +174,7 @@
       "context": "Library used for token counting in managing input and output sizes.",
       "opened_at": "src/codilay/llm_client.py",
       "classification": "external_package",
-      "classification_note": "Library for token size management."
+      "classification_note": "Utilizes Tiktoken library for managing LLM token sizes."
     },
     {
       "id": "wire_024",
@@ -184,7 +184,7 @@
       "context": "Handles date and time functionalities for rendering document generation timestamps.",
       "opened_at": "src/codilay/docstore.py",
       "classification": "external_package",
-      "classification_note": "Date utilities for document creation timestamping."
+      "classification_note": "This dependency is for date handling and is commonly seen in time-sensitive operations."
     },
     {
       "id": "wire_025",
@@ -194,7 +194,7 @@
       "context": "Provides timezone information for generating UTC time stamps.",
       "opened_at": "src/codilay/docstore.py",
       "classification": "external_package",
-      "classification_note": "Needed for consistent timezone info in timestamps."
+      "classification_note": "Handles timezone aspects, possibly missing library if not resolved."
     },
     {
       "id": "wire_026",
@@ -204,7 +204,7 @@
       "context": "Used to compute term frequencies within documents and for query indexing.",
       "opened_at": "src/codilay/retriever.py",
       "classification": "external_package",
-      "classification_note": "Counter from collections module for term frequency calculation."
+      "classification_note": "Part of the collections module for efficient counting operations; standard Python."
     },
     {
       "id": "wire_027",
@@ -214,7 +214,7 @@
       "context": "Used for structuring data, specifically representing a scored documentation section.",
       "opened_at": "src/codilay/retriever.py",
       "classification": "external_package",
-      "classification_note": "Decorators for defining data structures in retriever."
+      "classification_note": "Use of data classes to structure data indicates standard Python utility."
     },
     {
       "id": "wire_029",
@@ -224,7 +224,7 @@
       "context": "Used for styled console outputs, aiding in user-friendly terminal interactions.",
       "opened_at": "src/codilay/scheduler.py",
       "classification": "external_package",
-      "classification_note": "Rich library for improved terminal output formatting."
+      "classification_note": "Rich library used to enhance terminal outputs."
     },
     {
       "id": "wire_030",
@@ -234,7 +234,7 @@
       "context": "Utilized to handle the serialization and deserialization of the scheduler configuration.",
       "opened_at": "src/codilay/scheduler.py",
       "classification": "external_package",
-      "classification_note": "JSON operations in scheduler's configuration tasks."
+      "classification_note": "JSON utility for data exchange within the scheduler module."
     },
     {
       "id": "wire_031",
@@ -244,7 +244,7 @@
       "context": "Enables file and directory path operations essential for configuration management and PID file handling.",
       "opened_at": "src/codilay/scheduler.py",
       "classification": "external_package",
-      "classification_note": "Used for handling paths and configurations in the scheduler."
+      "classification_note": "Standard library used for path operations."
     },
     {
       "id": "wire_032",
@@ -254,7 +254,7 @@
       "context": "Facilitates execution of shell commands to integrate git operations, such as fetching new commit info.",
       "opened_at": "src/codilay/scheduler.py",
       "classification": "external_package",
-      "classification_note": "Manages subprocess operations for executing commands."
+      "classification_note": "Shell command executions through the subprocess library \u2014 standard Python."
     },
     {
       "id": "wire_033",
@@ -264,7 +264,7 @@
       "context": "Accesses system-specific parameters and functions, used for executing Python modules.",
       "opened_at": "src/codilay/scheduler.py",
       "classification": "external_package",
-      "classification_note": "Provides access to Python system-specific parameters."
+      "classification_note": "System operations helper from the Python library."
     },
     {
       "id": "wire_034",
@@ -274,7 +274,7 @@
       "context": "Allows time-related operations including sleep to handle polling intervals.",
       "opened_at": "src/codilay/scheduler.py",
       "classification": "external_package",
-      "classification_note": "Handles timing operations for effective scheduling."
+      "classification_note": "Handles time-based operations, standard library."
     },
     {
       "id": "wire_035",
@@ -284,7 +284,7 @@
       "context": "Provides date and time functionalities to timestamp scheduler operations and configuration updates.",
       "opened_at": "src/codilay/scheduler.py",
       "classification": "external_package",
-      "classification_note": "For time-based operations in the scheduler."
+      "classification_note": "Datetime functionalities for tracking time \u2014 standard Python module."
     },
     {
       "id": "wire_036",
@@ -294,7 +294,7 @@
       "context": "Type hint for optional parameters, aiding in clarity and type checking.",
       "opened_at": "src/codilay/scheduler.py",
       "classification": "external_package",
-      "classification_note": "Type hints for optional parameter usage."
+      "classification_note": "Provides type hinting for optional parameters, part of typing module."
     },
     {
       "id": "wire_039",
@@ -303,8 +303,8 @@
       "type": "import",
       "context": "Used in `promote_to_doc` method to format chat messages into documentation sections.",
       "opened_at": "src/codilay/chatstore.py",
-      "classification": "config_dependency",
-      "classification_note": "ChatStore dependency for formatting operations."
+      "classification": "missing_file",
+      "classification_note": "Prompts related imports are missing from expected location."
     },
     {
       "id": "wire_040",
@@ -313,8 +313,8 @@
       "type": "import",
       "context": "Used in `extract_and_store_memory` for memory extraction operations involving LLM.",
       "opened_at": "src/codilay/chatstore.py",
-      "classification": "config_dependency",
-      "classification_note": "Manager dependency for memory operations in ChatStore."
+      "classification": "missing_file",
+      "classification_note": "Memory extraction involving prompts not matching existing imports."
     },
     {
       "id": "wire_041",
@@ -323,8 +323,8 @@
       "type": "import",
       "context": "The AIExporter relies on the AgentState to load section indexing and content data necessary for generating the export.",
       "opened_at": "src/codilay/exporter.py",
-      "classification": "config_dependency",
-      "classification_note": "AgentState management in the exporter."
+      "classification": "missing_file",
+      "classification_note": "AgentState should be part of state management yet is not resolved."
     },
     {
       "id": "wire_042",
@@ -333,8 +333,8 @@
       "type": "import",
       "context": "The Planner requires the LLMClient to interact with the language model for generating the processing plan.",
       "opened_at": "src/codilay/planner.py",
-      "classification": "config_dependency",
-      "classification_note": "Planner's interaction with LLM is critical for operations."
+      "classification": "missing_file",
+      "classification_note": "Planner imports from a missing LLM Client module."
     },
     {
       "id": "wire_043",
@@ -343,8 +343,8 @@
       "type": "import",
       "context": "Used to construct the prompt sent to the LLM for planning file processing.",
       "opened_at": "src/codilay/planner.py",
-      "classification": "config_dependency",
-      "classification_note": "Prompts specifically for planning processes."
+      "classification": "missing_file",
+      "classification_note": "A missing import concerning prompt construction from the expected path."
     },
     {
       "id": "wire_044",
@@ -353,8 +353,8 @@
       "type": "import",
       "context": "Used to create the system-level context for the LLM call in file planning.",
       "opened_at": "src/codilay/planner.py",
-      "classification": "config_dependency",
-      "classification_note": "System level prompt for file planning processes."
+      "classification": "missing_file",
+      "classification_note": "System-level context prompt path does not resolve correctly."
     },
     {
       "id": "wire_045",
@@ -363,8 +363,8 @@
       "type": "import",
       "context": "Maintains the current agent state which is passed into the plan method as context.",
       "opened_at": "src/codilay/planner.py",
-      "classification": "config_dependency",
-      "classification_note": "Usage of AgentState within Planner's context."
+      "classification": "missing_file",
+      "classification_note": "AgentState required for planner operations is unresolved."
     },
     {
       "id": "wire_046",
@@ -373,8 +373,8 @@
       "type": "import",
       "context": "Handles file chunking operations for processing large files.",
       "opened_at": "src/codilay/processor.py",
-      "classification": "config_dependency",
-      "classification_note": "Critical dependency for file chunk operations."
+      "classification": "missing_file",
+      "classification_note": "Chunker expectedly handles chunk operations but its location isn't aligned with imports."
     },
     {
       "id": "wire_047",
@@ -383,8 +383,8 @@
       "type": "import",
       "context": "Stores and manages documentation sections and their content.",
       "opened_at": "src/codilay/processor.py",
-      "classification": "config_dependency",
-      "classification_note": "DocStore is relied upon for data storage interactions."
+      "classification": "missing_file",
+      "classification_note": "DocStore handling documentation sections missing from actual loads."
     },
     {
       "id": "wire_048",
@@ -393,8 +393,8 @@
       "type": "import",
       "context": "Interacts with the LLM for processing file content.",
       "opened_at": "src/codilay/processor.py",
-      "classification": "config_dependency",
-      "classification_note": "LLM communication is vital for processing large files."
+      "classification": "missing_file",
+      "classification_note": "Expected LLMClient interactions in importing suggests missing libraries."
     },
     {
       "id": "wire_049",
@@ -403,8 +403,8 @@
       "type": "import",
       "context": "Provides templates for generating LLM prompts during processing.",
       "opened_at": "src/codilay/processor.py",
-      "classification": "config_dependency",
-      "classification_note": "Prompt templates supplied for processing tasks."
+      "classification": "missing_file",
+      "classification_note": "Prompts for processing are absent from documented paths."
     },
     {
       "id": "wire_050",
@@ -413,8 +413,8 @@
       "type": "import",
       "context": "Represents the current state of the processing agent.",
       "opened_at": "src/codilay/processor.py",
-      "classification": "config_dependency",
-      "classification_note": "Represents the complex state of the Processor agent."
+      "classification": "missing_file",
+      "classification_note": "An unresolved path for the AgentState component."
     },
     {
       "id": "wire_052",
@@ -423,8 +423,8 @@
       "type": "import",
       "context": "Used to generate the system prompt before making an AI call for smart triage.",
       "opened_at": "src/codilay/triage.py",
-      "classification": "config_dependency",
-      "classification_note": "Prompt component to support AI-driven triage."
+      "classification": "missing_file",
+      "classification_note": "Missing a system-level prompt module path, obstructing smart triage setups."
     },
     {
       "id": "wire_053",
@@ -433,8 +433,8 @@
       "type": "import",
       "context": "Used to generate the triage-specific user prompt for the AI model in smart mode.",
       "opened_at": "src/codilay/triage.py",
-      "classification": "config_dependency",
-      "classification_note": "Crucial prompt integration for triage operations."
+      "classification": "missing_file",
+      "classification_note": "User prompt paths for triage unsupported by provided structure."
     },
     {
       "id": "wire_054",
@@ -443,8 +443,8 @@
       "type": "import",
       "context": "The WireBus module extends the functionalities of WireManager by implementing thread-safe operations and event subscriptions.",
       "opened_at": "src/codilay/wire_bus.py",
-      "classification": "config_dependency",
-      "classification_note": "Extension from WireManager, needed for event processing."
+      "classification": "missing_file",
+      "classification_note": "WireManager for wire-bus operations is cited but not found."
     },
     {
       "id": "wire_062",
@@ -454,7 +454,7 @@
       "context": "Used to create a custom event handler that detects file system changes.",
       "opened_at": "src/codilay/watcher.py",
       "classification": "external_package",
-      "classification_note": "Watchdog library for file changes event handling."
+      "classification_note": "Relies on watchdog for filesystem event handling."
     },
     {
       "id": "wire_063",
@@ -464,7 +464,7 @@
       "context": "Essential for setting up a file system observer that monitors the project directory.",
       "opened_at": "src/codilay/watcher.py",
       "classification": "external_package",
-      "classification_note": "Observation setup using Watchdog."
+      "classification_note": "Watchdog observer utilized for directory monitoring."
     },
     {
       "id": "wire_064",
@@ -473,8 +473,8 @@
       "type": "import",
       "context": "Involved in loading configuration settings necessary for processing file changes.",
       "opened_at": "src/codilay/watcher.py",
-      "classification": "config_dependency",
-      "classification_note": "Configuration is necessary for any processed change."
+      "classification": "missing_file",
+      "classification_note": "CodiLay configuration usage but missing files cause resolution issues."
     },
     {
       "id": "wire_065",
@@ -483,8 +483,8 @@
       "type": "import",
       "context": "Used to manage and update documentation sections from file changes.",
       "opened_at": "src/codilay/watcher.py",
-      "classification": "config_dependency",
-      "classification_note": "Handles updates due to file changes in the docstore."
+      "classification": "missing_file",
+      "classification_note": "Missing document store management obfuscates handling updates."
     },
     {
       "id": "wire_066",
@@ -493,8 +493,8 @@
       "type": "import",
       "context": "Handles communications with LLMs to process and generate documentation from changed files.",
       "opened_at": "src/codilay/watcher.py",
-      "classification": "config_dependency",
-      "classification_note": "LLM bridge for change processing."
+      "classification": "missing_file",
+      "classification_note": "Concerning LLM handling and interactions, unresolved within the file layout."
     },
     {
       "id": "wire_067",
@@ -503,8 +503,8 @@
       "type": "import",
       "context": "Responsible for processing individual files that have changed to update the documentation.",
       "opened_at": "src/codilay/watcher.py",
-      "classification": "config_dependency",
-      "classification_note": "Core processing for changed files to update docs."
+      "classification": "missing_file",
+      "classification_note": "Processor operations on changed files require paths missing presently."
     },
     {
       "id": "wire_068",
@@ -513,8 +513,8 @@
       "type": "import",
       "context": "Loads and applies settings to influence watcher behavior and LLM interaction.",
       "opened_at": "src/codilay/watcher.py",
-      "classification": "config_dependency",
-      "classification_note": "Influences Watcher's behavior and LLM use."
+      "classification": "missing_file",
+      "classification_note": "Unavailable settings obstruct anticipated load and runtime configurations."
     },
     {
       "id": "wire_069",
@@ -523,8 +523,8 @@
       "type": "import",
       "context": "Keeps track of the current open wires, processed files, and state of documentation.",
       "opened_at": "src/codilay/watcher.py",
-      "classification": "config_dependency",
-      "classification_note": "Manages states pertinent to documentation."
+      "classification": "missing_file",
+      "classification_note": "AgentState which logs various states is cited but missing."
     },
     {
       "id": "wire_070",
@@ -533,8 +533,8 @@
       "type": "import",
       "context": "Provides a user interface for reporting status, errors, and progress of documentation tasks.",
       "opened_at": "src/codilay/watcher.py",
-      "classification": "config_dependency",
-      "classification_note": "UI support for status reporting and interaction."
+      "classification": "missing_file",
+      "classification_note": "UIs for user interaction vanish due to missing paths in this configuration."
     },
     {
       "id": "wire_071",
@@ -543,8 +543,8 @@
       "type": "import",
       "context": "Manages open and closed wires to ensure all dependencies and references are synchronized.",
       "opened_at": "src/codilay/watcher.py",
-      "classification": "config_dependency",
-      "classification_note": "Manages sync and state tracking for open wires."
+      "classification": "missing_file",
+      "classification_note": "WireManager synchronization context remains unresolved."
     },
     {
       "id": "wire_081",
@@ -554,7 +554,7 @@
       "context": "Rich Console provides the foundation for rendering advanced, styled CLI outputs.",
       "opened_at": "src/codilay/ui.py",
       "classification": "external_package",
-      "classification_note": "Rich console integration for styled output."
+      "classification_note": "Styled console outputs from a recognized module Rich."
     },
     {
       "id": "wire_082",
@@ -564,7 +564,7 @@
       "context": "Rich Panel is used for containing and displaying information elegantly in bordered divisions.",
       "opened_at": "src/codilay/ui.py",
       "classification": "external_package",
-      "classification_note": "Rich panel usage for organizing console output."
+      "classification_note": "Panel elements from Rich align for seamless UI experiences."
     },
     {
       "id": "wire_083",
@@ -574,7 +574,7 @@
       "context": "Rich Table is used for displaying tabular data in a readable, styled format.",
       "opened_at": "src/codilay/ui.py",
       "classification": "external_package",
-      "classification_note": "Rich table facilitates data presentation."
+      "classification_note": "Rich's capabilities extend to pretty table rendering in CLI."
     },
     {
       "id": "wire_084",
@@ -584,7 +584,7 @@
       "context": "Rich Prompt handles user input in an interactive and styled manner.",
       "opened_at": "src/codilay/ui.py",
       "classification": "external_package",
-      "classification_note": "Interactive prompts using Rich."
+      "classification_note": "Utilizes prompt stylings from the Rich library to enhance interaction."
     },
     {
       "id": "wire_085",
@@ -594,7 +594,7 @@
       "context": "Used to match file paths with glob patterns, assisting in custom file selection.",
       "opened_at": "src/codilay/ui.py",
       "classification": "external_package",
-      "classification_note": "Utility to match file names with patterns."
+      "classification_note": "File name matching with patterns uses an integral fnmatch utility."
     },
     {
       "id": "wire_086",
@@ -604,7 +604,7 @@
       "context": "Used to implement a simple spinner via the console status feature.",
       "opened_at": "src/codilay/ui.py",
       "classification": "external_package",
-      "classification_note": "Utilizes context managers for resource handling."
+      "classification_note": "Contextmanager facilitates console spinners or status displays through Python's contextlib."
     }
   ],
   "closed_wires": [
@@ -709,114 +709,6 @@
       "summary": ""
     },
     {
-      "id": "wire_072",
-      "from": "codilay_legacy.py",
-      "to": "codilay.config.CodiLayConfig",
-      "type": "import",
-      "context": "Used to load and manage the configuration settings necessary for documentation processing.",
-      "opened_at": "codilay_legacy.py",
-      "classification": "config_dependency",
-      "classification_note": "Legacy interface configuration hinge on settings managed within CodiLayConfig.",
-      "resolved_in": "codilay/links.json",
-      "summary": ""
-    },
-    {
-      "id": "wire_073",
-      "from": "codilay_legacy.py",
-      "to": "codilay.docstore.DocStore",
-      "type": "import",
-      "context": "Handles storage and management of generated documentation content.",
-      "opened_at": "codilay_legacy.py",
-      "classification": "config_dependency",
-      "classification_note": "Legacy processing manages documentation with the assistance of DocStore.",
-      "resolved_in": "codilay/links.json",
-      "summary": ""
-    },
-    {
-      "id": "wire_074",
-      "from": "codilay_legacy.py",
-      "to": "codilay.llm_client.LLMClient",
-      "type": "import",
-      "context": "Interacts with language models for processing and planning documentation tasks.",
-      "opened_at": "codilay_legacy.py",
-      "classification": "config_dependency",
-      "classification_note": "Legacy CLI leverages LLM Client to direct tasks and interactions, largely focusing on documentation.",
-      "resolved_in": "codilay/links.json",
-      "summary": ""
-    },
-    {
-      "id": "wire_075",
-      "from": "codilay_legacy.py",
-      "to": "codilay.planner.Planner",
-      "type": "import",
-      "context": "Determines the processing order and planning tasks based on file structure.",
-      "opened_at": "codilay_legacy.py",
-      "classification": "config_dependency",
-      "classification_note": "The legacy interface relies on Planner\u2019s planning tasks to structure processing.",
-      "resolved_in": "codilay/links.json",
-      "summary": ""
-    },
-    {
-      "id": "wire_076",
-      "from": "codilay_legacy.py",
-      "to": "codilay.processor.Processor",
-      "type": "import",
-      "context": "Processes individual files to extract and generate documentation content.",
-      "opened_at": "codilay_legacy.py",
-      "classification": "config_dependency",
-      "classification_note": "Processor acts under legacy\u2019s CLI interface paradigm to standardize file processing routines.",
-      "resolved_in": "codilay/links.json",
-      "summary": ""
-    },
-    {
-      "id": "wire_077",
-      "from": "codilay_legacy.py",
-      "to": "codilay.scanner.Scanner",
-      "type": "import",
-      "context": "Performs file scanning and detection for changes, necessary for determining files to process.",
-      "opened_at": "codilay_legacy.py",
-      "classification": "config_dependency",
-      "classification_note": "Legacy context utilizes Scanner for efficiently determining file state variations.",
-      "resolved_in": "codilay/links.json",
-      "summary": ""
-    },
-    {
-      "id": "wire_078",
-      "from": "codilay_legacy.py",
-      "to": "codilay.state.AgentState",
-      "type": "import",
-      "context": "Tracks the current state of documentation processing, including files processed and wires.",
-      "opened_at": "codilay_legacy.py",
-      "classification": "config_dependency",
-      "classification_note": "State tracking and persona management is centered around AgentState for legacy tasks.",
-      "resolved_in": "codilay/links.json",
-      "summary": ""
-    },
-    {
-      "id": "wire_079",
-      "from": "codilay_legacy.py",
-      "to": "codilay.ui.UI",
-      "type": "import",
-      "context": "Manages user interactions and output formatting using the Rich library.",
-      "opened_at": "codilay_legacy.py",
-      "classification": "config_dependency",
-      "classification_note": "Legacy operations depict user-side experiences, formatted by the UI module.",
-      "resolved_in": "codilay/links.json",
-      "summary": ""
-    },
-    {
-      "id": "wire_080",
-      "from": "codilay_legacy.py",
-      "to": "codilay.wire_manager.WireManager",
-      "type": "import",
-      "context": "Manages open and closed wire states, essential for handling unresolved references in documentation.",
-      "opened_at": "codilay_legacy.py",
-      "classification": "config_dependency",
-      "classification_note": "WireManager\u2019s responsibility extends over legacy interface to address dynamic wire state management.",
-      "resolved_in": "codilay/links.json",
-      "summary": ""
-    },
-    {
       "id": "wire_055",
       "from": "src/codilay/parallel_orchestrator.py",
       "to": "codilay.dependency_graph.DependencyGraph",
@@ -909,6 +801,114 @@
       "opened_at": "multi_provider_support.md",
       "resolved_in": "src/codilay/ui.py",
       "summary": "Resolved by processing src/codilay/ui.py"
+    },
+    {
+      "id": "wire_072",
+      "from": "codilay_legacy.py",
+      "to": "codilay.config.CodiLayConfig",
+      "type": "import",
+      "context": "Used to load and manage the configuration settings necessary for documentation processing.",
+      "opened_at": "codilay_legacy.py",
+      "classification": "config_dependency",
+      "classification_note": "Legacy interface configuration hinge on settings managed within CodiLayConfig.",
+      "resolved_in": "codilay_legacy.py",
+      "summary": ""
+    },
+    {
+      "id": "wire_073",
+      "from": "codilay_legacy.py",
+      "to": "codilay.docstore.DocStore",
+      "type": "import",
+      "context": "Handles storage and management of generated documentation content.",
+      "opened_at": "codilay_legacy.py",
+      "classification": "config_dependency",
+      "classification_note": "Legacy processing manages documentation with the assistance of DocStore.",
+      "resolved_in": "codilay_legacy.py",
+      "summary": ""
+    },
+    {
+      "id": "wire_074",
+      "from": "codilay_legacy.py",
+      "to": "codilay.llm_client.LLMClient",
+      "type": "import",
+      "context": "Interacts with language models for processing and planning documentation tasks.",
+      "opened_at": "codilay_legacy.py",
+      "classification": "config_dependency",
+      "classification_note": "Legacy CLI leverages LLM Client to direct tasks and interactions, largely focusing on documentation.",
+      "resolved_in": "codilay_legacy.py",
+      "summary": ""
+    },
+    {
+      "id": "wire_075",
+      "from": "codilay_legacy.py",
+      "to": "codilay.planner.Planner",
+      "type": "import",
+      "context": "Determines the processing order and planning tasks based on file structure.",
+      "opened_at": "codilay_legacy.py",
+      "classification": "config_dependency",
+      "classification_note": "The legacy interface relies on Planner\u2019s planning tasks to structure processing.",
+      "resolved_in": "codilay_legacy.py",
+      "summary": ""
+    },
+    {
+      "id": "wire_076",
+      "from": "codilay_legacy.py",
+      "to": "codilay.processor.Processor",
+      "type": "import",
+      "context": "Processes individual files to extract and generate documentation content.",
+      "opened_at": "codilay_legacy.py",
+      "classification": "config_dependency",
+      "classification_note": "Processor acts under legacy\u2019s CLI interface paradigm to standardize file processing routines.",
+      "resolved_in": "codilay_legacy.py",
+      "summary": ""
+    },
+    {
+      "id": "wire_077",
+      "from": "codilay_legacy.py",
+      "to": "codilay.scanner.Scanner",
+      "type": "import",
+      "context": "Performs file scanning and detection for changes, necessary for determining files to process.",
+      "opened_at": "codilay_legacy.py",
+      "classification": "config_dependency",
+      "classification_note": "Legacy context utilizes Scanner for efficiently determining file state variations.",
+      "resolved_in": "codilay_legacy.py",
+      "summary": ""
+    },
+    {
+      "id": "wire_078",
+      "from": "codilay_legacy.py",
+      "to": "codilay.state.AgentState",
+      "type": "import",
+      "context": "Tracks the current state of documentation processing, including files processed and wires.",
+      "opened_at": "codilay_legacy.py",
+      "classification": "config_dependency",
+      "classification_note": "State tracking and persona management is centered around AgentState for legacy tasks.",
+      "resolved_in": "codilay_legacy.py",
+      "summary": ""
+    },
+    {
+      "id": "wire_079",
+      "from": "codilay_legacy.py",
+      "to": "codilay.ui.UI",
+      "type": "import",
+      "context": "Manages user interactions and output formatting using the Rich library.",
+      "opened_at": "codilay_legacy.py",
+      "classification": "config_dependency",
+      "classification_note": "Legacy operations depict user-side experiences, formatted by the UI module.",
+      "resolved_in": "codilay_legacy.py",
+      "summary": ""
+    },
+    {
+      "id": "wire_080",
+      "from": "codilay_legacy.py",
+      "to": "codilay.wire_manager.WireManager",
+      "type": "import",
+      "context": "Manages open and closed wire states, essential for handling unresolved references in documentation.",
+      "opened_at": "codilay_legacy.py",
+      "classification": "config_dependency",
+      "classification_note": "WireManager\u2019s responsibility extends over legacy interface to address dynamic wire state management.",
+      "resolved_in": "codilay_legacy.py",
+      "summary": ""
     }
   ],
   "section_index": {
@@ -1623,7 +1623,7 @@
     }
   },
   "section_contents": {
-    "overview": "# CodiLay Project Overview\n\nCodiLay is a sophisticated code documentation and management system designed to help developers and teams keep track of documentation across various stages of development. It provides a way to integrate language models (LLMs) into the software documentation process, offering capabilities such as automatic document generation, dependency management, and team collaboration enhancements.\n\n## Architecture\n\nThe project is structured into several key modules and components, each serving distinct purposes:\n\n- **Core Modules**:\n  - **CodiLay CLI and Entry Points**: The primary entry point for CodiLay is the CLI found in `src/codilay/__main__.py`. It integrates with the `cli` module (`src/codilay/cli.py`) to facilitate command-line interactions.\n  - **Pluggable Modules**: The architecture supports modular inclusion of components like `llm_client` for integrating various LLM APIs, `doc_differ` for change-tracking of documentation, and `wire_manager` to handle dependencies and references.\n  - **Infrastructure Support**: CodiLay uses `git_tracker` to manage version control interactions and `scheduler` for automated tasks management.\n\n- **Documentation Management**:\n  - **DocStore**: The `src/codilay/docstore.py` module manages the storage and retrieval of documentation content, ensuring synchronization with the codebase and Git history.\n  - **Exporter and Retrievers**: Components like `exporter` and `retriever` focus on document data handling, facilitating efficient access and export of valuable insights.\n\n- **AI and Planning**:\n  - **LLM Integration**: Through `llm_client`, CodiLay interfaces with language models to facilitate contextual understanding and documentation suggestions.\n  - **Planning and Orchestration**: Involves the `planner` and `parallel_orchestrator` to ensure structured processing of documentation tasks.\n\n- **User Interface**:\n  - **CLI and UI**: The CLI extends a comprehensive interface for user interaction with CodiLay's capabilities. The `ui.py` module leverages rich console outputs for enhanced user experience.\n\n- **Server and Extensions**:\n  - **Hosting Server**: `server.py` provides API access, allowing external systems to interact with and benefit from CodiLay's capabilities, especially in chat and memory retrieval.\n  - **VSCode Extension**: Supports integration with VSCode via an extension found under `vscode-extension`, enhancing IDE capabilities with CodiLay's functionalities.\n\n- **Tests**:\n  - Comprehensive testing is provided for various modules, ensuring reliable operation and facilitating continuous integration.\n\n## For New Developers\nNew developers should begin by familiarizing themselves with the primary entry point (`src/codilay/__main__.py`) and resolve any setup dependencies defined in `setup.py`. From there, exploring key modules by following the tests and utilizing the VSCode extension can provide practical familiarity with CodiLay's capabilities and development process.\n\n## Tech Stack\nCodiLay is predominantly built with Python, leveraging technologies like FastAPI for server capabilities, and several LLM integration libraries. Dependency management is facilitated through `pyproject.toml` and `setup.py` for packaging.\n\n",
+    "overview": "CodiLay efficiently handles documentation and knowledge management for complex codebases, integrating AI-driven insights through LLMs. Architecturally, it comprises modules that chunk, scan, and process files, oversee configuration settings, manage dependencies, and track versioning. The backend powered through Python includes server-side operations via FastAPI, while a Visual Studio Code extension developed in TypeScript enables robust editor integration. CodiLay\u2019s workflows facilitate modular management, collaborative memory, dependency analysis, and scheduled task execution, supported by a rich command-line interface module.",
     "editor-config": "The `.editorconfig` file is used to maintain consistent coding styles for multiple developers working on the same project across various editors and IDEs. It is essential for ensuring that all collaborators conform to the same coding conventions, minimizing discrepancies and stylistic errors.\n\n#### Key Configurations:\n- **Root**: Specifies that this is the root `.editorconfig` file.\n- **Indentation**:\n  - Uses spaces for indentation (`indent_style = space`).\n  - Default indentation size is 4 spaces, except for YAML files which use 2 spaces.\n- **Character Set**: UTF-8 character encoding is used for saved files (`charset = utf-8`).\n- **Whitespace Management**: \n  - Trims trailing whitespace in all files except Markdown (`trim_trailing_whitespace = true` for general, `false` for `*.md`).\n  - Ensures a newline at the end of files (`insert_final_newline = true`).\n- **Line Endings**: Uses linefeed (LF) for end-of-line (`end_of_line = lf`).\n\n#### Custom Configurations:\n- **YAML Files**: YAML and YML files have a specific configuration to use an indentation size of 2 spaces to adhere to YAML formatting norms.\n\nThis configuration helps in maintaining a coherent style across different types of files, particularly focusing on handling whitespace and ensuring a unified indentation format.",
     "git-attributes": "The `.gitattributes` file is used to manage how Git treats certain file types within the repository. It plays a crucial role in ensuring consistent text file format across different environments and preventing binary files from being altered in a way that could corrupt them.\n\n### File Handling Configuration\n\n- **Automatic Line Ending Conversion**: \n  - `* text=auto`: Automatically detects text files and normalizes line endings to LF (Line Feed) to ensure consistency.\n\n- **Specific File Type Configurations**: \n  - Files with the extensions `.py`, `.md`, `.json`, `.toml`, `.txt`, and `.sh` are explicitly set to use LF for line endings: `text eol=lf`.\n  - Binary files such as `.png`, `.jpg`, `.jpeg`, `.gif`, `.ico`, `.mov`, `.mp4`, and `.pwf` are marked as `binary` to prevent line-ending conversion, which could corrupt these files.\n\nThis configuration is essential for maintaining code quality and preventing issues when files are transferred between different operating systems.",
     "ci-workflow": "This configuration file sets up a Continuous Integration (CI) workflow using GitHub Actions for the codebase. The workflow is triggered on pushes and pull requests to the `main` and `master` branches. It defines a job named `test` that runs on the latest Ubuntu environment and supports a testing matrix for Python versions `3.11` and `3.12`.\n\n### Jobs\n- **Test**: Runs tests on specified Python versions.\n  - **Setup**: Utilizes actions/checkout@v4 to check out the repository and actions/setup-python@v5 to set up Python with a pip cache.\n  - **Dependencies**: Installs development and server dependencies.\n  - **Linting**: Uses `ruff` to check and format code standards.\n  - **Testing**: Executes `pytest` to run the test suite.\n\nThis configuration ensures code quality and functionality across different Python versions and assists in maintaining consistent code styling and test integrity.\n\u2192 See [Persistent Settings & Interactive Menu](#persistent-settings-interactive-menu)",
@@ -1674,11 +1674,11 @@
     "parallel-orchestrator": "> \u26a0\ufe0f *This section is being updated \u2014 source file changed.*\n\nThe `Parallel Orchestrator` is a sophisticated module within the CodiLay system designed to handle parallel file processing with tier-based execution. Its architecture strategically leverages worker threads to process files concurrently while adhering to dependencies determined through a static import analysis.\n\n### Key Components:\n- **Architecture**: Utilizes a central `Wire Bus` for managing shared states, ensuring threads communicate and synchronize safely using locking mechanisms.\n- **Processing Flow**: Involves building a dependency graph, computing processing tiers using topological sorting, and running files in parallel within each tier. Tier boundaries act as synchronization points where files reconcile their wire dependencies.\n- **Worker and Tier Result Tracking**: Through `WorkerResult` and `TierResult` dataclasses, the module maintains detailed performance metrics and processing outcomes.\n- **Park Management**: Handles files unable to process due to dependency constraints, 'parking' them until dependencies resolve. A notification system assists in automatically un-parking these files when conditions change.\n- **Snapshot and Locking Mechanics**: To ensure thread safety, wire states and document-related operations are managed under locking mechanisms. Each worker gets a 'frozen' snapshot at task initiation.\n\n### Integrations:\n- **Wire Bus Integration**: All changes and operations related to dependency wires pass through the Wire Bus to ensure consistency in shared state views.",
     "codilay-server": "The `run_server()` function launches the CodiLay web server using Uvicorn, a lightning-fast ASGI server implementation. It starts by setting up the FastAPI app created by `create_app()`, which manages HTTP interactions and serves as the entry point for the CodiLay platform. This setup supports three integrated layers: the Reader for rendering the `CODEBASE.md` with navigation and dependencies, the Chatbot layer for interactive Q&A, and the Deep Agent for source file processing when documentation queries fall short.\n\nKey imports include asyncio for concurrency, FastAPI for the web framework, and modules for configuration and state management like `CodiLayConfig`, `Settings`, and `AgentState`. The configuration is adaptable through various command-line arguments, allowing the server to bind to paths and ports per user specification. By default, it listens on `127.0.0.1:8484`, outputting URLs in the console for easy developer access. Importantly, the server runs at a 'warning' log level to provide critical operational feedback without excessive verbosity.\n\nThis file imports a rich set of internal modules, establishing connections to various aspects of CodiLay's operation:\n- `codilay.chatstore` for session message handling.\n- `codilay.config` and `codilay.settings` for configurable startup and runtime parameters.\n- `codilay.retriever` and `codilay.state` for handling data retrieval and maintaining agent lifecycle states.\n\nThese connections are crucial for supporting CodiLay's complex, multi-layer architecture, ensuring seamless integration between user interface, dialogue management, and deep code exploration capabilities.\n\nThe `ChatRequest` class represents a structured request to the chat system. It uses FastAPI's `BaseModel` for easy data validation and serialization. This data model includes a `question` parameter which is a string containing the user's query. The `conversation_id` is optional and, when not provided, indicates a new conversation. The `deep` boolean flag forces the system into a 'deep agent mode', enhancing the capabilities of the agent to process more involved documentation queries. This class is foundational for managing user's intents and maintaining conversation state within the chat system.\n\nThe `ChatResponse` class is used to encapsulate the response from the chat system. It inherits from FastAPI's `BaseModel` to facilitate data validation and serialization. This class defines several attributes:\n\n- `answer`: A string that contains the chatbot's response to the user's query.\n- `sources`: A list of strings indicating the information sources used to generate the response.\n- `confidence`: A float representing the certainty level of the response.\n- `escalated`: A boolean flag that indicates whether the deep agent was employed to derive the response, reflecting cases where complex source code processing was required.\n- `conversation_id`: An identifier string for keeping track of the chat session. Defaults to an empty string if none is provided.\n- `message_id`: A unique string identifier for each specific message interaction, enabling precise audit and tracking within conversation threads.\n\nThe `ChatResponse` structure plays a crucial role in the chat system by providing a standardized format for all responses, supporting internal consistency and enabling effective handling of complex data during interactions. It seamlessly integrates into CodiLay's dialog management mechanisms, facilitating the tracking of conversation state and advanced processing scenarios. \n\n\u2192 See [Chat System Workflow] for how these responses interact with various components of CodiLay.\n\nThe `create_app()` function constructs a FastAPI web application for the CodiLay platform. It initializes the app with several routes to handle both data retrieval and interactive operations related to managing and navigating a codebase. Key responsibilities include:\n\n- **State Management**: Utilizes caching to efficiently manage and access the agent state, documentation content, and link data stored in JSON files, verifying their existence and using the most recent data based on file modification times.\n\n- **Endpoints for Codebase Navigation and Interaction**: Provides multiple HTTP GET endpoints for accessing codebase documentation (`/api/sections`, `/api/document`), dependency information (`/api/links`), and project statistics (`/api/stats`). These routes facilitate navigating the interactive web UI.\n\n- **Conversation and Message Operations**: Robust endpoints allow for creating, retrieving, updating, deleting, and interacting with conversations and messages stored by `ChatStore`. This functionality supports both the immediate conversational needs and longer-term memory management (`/api/conversations` and related).\n\n- **Chatbot Interaction and Layers**: The server exposes a chatbot endpoint (`/api/chat`) that enables complex interaction with the codebase. It merges TF-IDF search results and persistent session memory into query responses, escalating to a deeper analysis when simple documentation doesn't suffice.\n\n- **Integration with External Components**: Functions within `create_app()` depend on external classes and modules such as `AgentState`, `ChatStore`, `Retriever`, and configuration setups through `CodiLayConfig`. This reflects interconnectivity with different architectural layers, contributing to CodiLay's ability to deliver sophisticated code insights and facilitate documentation creation.\n\nThe `create_app()` function is pivotal in configuring the CodiLay server's capabilities. Within this function, the `_deep_agent_answer` coroutine answers complex coding queries by reading actual source files. It uses CodiLay's `LLMClient` and a `retriever` to identify and retrieve the most relevant files based on user queries and past context. This operation emphasizes precision by mimicking human-like deep analysis to obtain answers using the available context and enhancing the response quality with source code evidence. Additionally, the aasync `chat_stream` endpoint offers an upgrade by introducing server-sent events (SSE) for streaming conversations, which can fall back to traditional methods if the provider does not support streaming.\n\nThe `extract_memory` endpoint supports storing extracted conversational knowledge using `LLMClient`, facilitating advanced user experience by maintaining conversation continuity and context improvement over time. The `get_file` endpoint ensures secure retrieval of project files, which are essential in providing context for code analysis, allowing users to view content while enforcing path restrictions to uphold security measures. The `export_for_ai` endpoints (POST and GET) offer the capability to export documentation in AI-friendly formats, intended to facilitate machine understanding or further AI processing of the codebase, integrating smoothly with the documentation workflow.\n\nThe server file also introduces various features, such as `doc-diff`, `triage feedback`, `graph filters`, and `team memory` which collectively enhance the functionality of the platform by managing documentation evolution, feedback from users, visualizing system dependencies, and retaining team knowledge or decisions, respectively. Each feature corresponds to specific API endpoints that handle related data management tasks.\n\nThe `create_app()` function constructs and returns a FastAPI application extended with several RESTful endpoints crucial for team and conversation management:\n\n- **`GET /api/team/users`**: Lists all team members by invoking `list_users()` from the `TeamMemory` class. This facilitates easy retrieval of team data, crucial for backend administrative tasks.\n- **`POST /api/team/users`**: Registers a new team member by passing the incoming `username` and `display_name` to the `register_user()` method of `TeamMemory`. It allows for dynamic user management within the team environment.\n- **`GET /api/team/context`**: Returns a formatted team knowledge base suitable for LLM context injection via `build_context()` in `TeamMemory`, enhancing collaborative AI tasks.\n\n- **`GET /api/search`**: Conducts a full-text search on stored conversations by leveraging `ConversationSearch`. It supports filters such as `role` and `conversation_id` for targeted queries. If the search index isn't loaded, it initiates a build on a separate thread.\n\n- **`POST /api/search/rebuild`**: Triggers an index rebuild for conversation searches using `ConversationSearch`. This endpoint ensures data integrity and search accuracy by periodically refreshing the index.\n\nThese endpoints enhance the interactive capacity of CodiLay's API, adding robust support for user and data management operations within the server architecture.\n\nThese functionalities leverage the `TeamMemory` and `ConversationSearch` classes from external modules to efficiently manage team data and enable smart searching capabilities, tying seamlessly into the CodiLay platform's operational backend. These endpoints are essential for backend operations, ensuring smooth user management and data retrieval workflows.\n\n### Function: _get_frontend_html\n\nThe `_get_frontend_html()` function is responsible for returning the HTML content for the CodiLay web UI. It attempts to read the `index.html` file located in the `web` directory adjacent to the server script. If the file exists, its contents are returned as a string; otherwise, a fallback HTML message is returned, indicating that the frontend cannot be located. This ensures the service can still display a basic message even if the primary user interface asset is missing.\n\nThis function is critical for serving the static content of the CodiLay UI, which users interact with via their web browsers. Its design ensures that core UI components are delivered directly as part of the server's response lifecycle, enhancing the initial loading speed and reducing client dependency on separate frontend hosting.",
     "codilay-watcher": "The `CodiLay Watcher` module in the `src/codilay/watcher.py` file manages the watching of file changes within a project directory using the `watchdog` library. When files are added, modified, or removed, the module triggers incremental updates to the documentation pipeline.\n\n### Main Components\n\n- **ChangeAccumulator**: Collects and debounces file change events, invoking a callback after a period of inactivity to process the batch of changes.\n\n- **CodiLayEventHandler**: A `watchdog` event handler that monitors specific file types relevant to CodiLay's operation and forwards relevant changes to the `ChangeAccumulator`.\n\n- **Watcher**: Acts as a controller for setting up the file system observer, handling the batch changes collected by the `ChangeAccumulator`, and executing the documentation update process using CodiLay's subsystems.\n\n### Functionality\n- **change detection**: The module supports ignoring patterns and selects file types based on a list of extensions, ensuring only pertinent changes are processed.\n- **debounce logic**: It employs a debounce strategy to group rapid changes into a single processing action, improving efficiency.\n- **document synchronization**: The Watcher coordinates an incremental documentation sync by interacting with components like `Processor` and `WireManager`.\n\n### Usage\nInvoke the watcher in CLI mode with commands like `codilay watch .` to start monitoring the current directory for changes, with options for debounce timing and ignoring specific patterns.\n\n### Requirements\nThe module requires the `watchdog` package, ensuring compatibility and graceful fallback if not installed.",
-    "codilay-legacy": "The `codilay_legacy.py` file serves as a legacy command-line interface (CLI) for CodiLay, enabling users to interact with the system via terminal commands. This script provides comprehensive CLI commands facilitated by the `Click` library, allowing users to perform multiple tasks like documenting codebases, checking documentation status, or cleaning up generated files.\n\n### Key Functionalities\n- **CLI Initialization**: Utilizes Click to define command groups and options. Key commands include:\n  - `run`: Default command that runs the documentation generation process on a specified codebase.\n  - `status`: Displays current state of CodiLay documentation on the target project.\n  - `clean`: Cleans up all CodiLay generated files from the specified output directory.\n\n- **File Management**: Implements mechanisms to process codebase files, track state, manage wires, and produce documentation.\n\n- **Component Integration**: Integrates various CodiLay components such as `LLMClient`, `Scanner`, `WireManager`, and `DocStore` to execute its operations.\n\n- **User Interaction**: Provides rich console outputs using the `Rich` library to enhance user interaction and feedback throughout its processing phases.",
+    "codilay-legacy": "The `codilay_legacy.py` file serves as a legacy command-line interface (CLI) for CodiLay, enabling users to interact with the system via terminal commands. This script provides comprehensive CLI commands facilitated by the `Click` library, allowing users to perform tasks like documenting codebases, checking documentation status, or cleaning up generated files.\n\n### Key Functionalities\n- **CLI Initialization**: Utilizes Click to define command groups and options. Key commands include:\n  - `run`: Default command that runs the documentation generation process on a specified codebase.\n  - `status`: Displays current state of CodiLay documentation on the target project.\n  - `clean`: Cleans up all CodiLay generated files from the specified output directory.\n\n- **File Management**: Implements mechanisms to process codebase files, track state, manage wires, and produce documentation.\n\n- **Component Integration**: Integrates various CodiLay components such as `LLMClient`, `Scanner`, `WireManager`, and `DocStore` to execute its operations.\n\n- **User Interaction**: Provides rich console outputs using the `Rich` library to enhance user interaction and feedback throughout its processing phases.\n\n### Execution Flow\n- **CLI Setup**: The CLI uses options to configure target paths, output directories, and LLM settings. Defaults are provided, but users can override them via command line arguments.\n\n- **Run Command**: Initiates the documentation process involving multiple phases:\n  - **Phase 1: Bootstrap** - Initializes components, loads configurations, and scans for files.\n  - **Phase 2: Planning** - Determines processing order using the Planner.\n  - **Phase 3: Processing** - Processes each file to build documentation, handling parsing, wire management, and state tracking.\n  - **Phase 4: Finalize** - Finalizes documentation, closes unresolved references, and saves output.\n\n- **Status and Clean Commands**: Provide utility to check the current documentation processing status and to clean up output files, respectively.",
     "links-json": "The `codilay/links.json` file plays a crucial role in managing inter-file relationships and dependencies within the CodiLay project. It stores metadata about generated documents, including closed and open wires which represent resolved and unresolved references respectively. Each wire has a unique identifier and contains contextual information such as file origin, target, type, and summary. Many wires are associated with configuration and import dependencies across different documentation and source files. These wires ensure the integrity and connectivity of CodiLay's documentation and module linkage structure. Moreover, this file aids in tracking external package dependencies through its structured data, facilitating comprehensive document processing and system analysis. The sectional management enabled by this JSON file supports automated documentation updates, providing clarity and cohesion across the project's various components.\n\n### Details on `wire_*` Entries\n\nEach entry in `codilay/links.json` provides a detailed mapping of dependencies and interactions across the CodiLay codebase. For example, wires such as `wire_034` and `wire_035` import Python's standard `time` and `datetime` libraries within `scheduler.py` to facilitate operations like polling and timestamping. `wire_046` to `wire_071` reflect critical internal dependencies including the use of `DocStore`, `LLMClient`, and `AgentState` across modules such as `processor.py`, `watcher.py`, and `parallel_orchestrator.py`. These dependencies support functionality like chunking, documentation management, and file system monitoring.\n\n#### Example:\n- **`wire_039` and `wire_040`** import specific prompts from `codilay.prompts` to process chat messages into documentation in `chatstore.py`, highlighting a key transformation stage in leveraging chat logs for documentation purposes.\n- **`wire_041`, `wire_045`, and `wire_059`** demonstrate the reliance on `AgentState` to provide context for imports in `exporter.py`, `planner.py`, and `parallel_orchestrator.py`, showcasing its central role in managing the operational state throughout different workflows.\n\nThis tightly connected framework illustrated by the wires ensures robust document generation, processing, and consistency, effectively binding together various project components for seamless operation.\n\n### Key Imports and Wire Descriptions\n\nThe `codilay/links.json` plays an integral role by mapping crucial components utilized within the legacy system, effectively bridging historical configurations with modern processing paradigms. The following wires illustrate the diverse module interconnectivity used throughout the legacy processing pipeline:\n\n- **`wire_072`:** Connects `codilay_legacy.py` with configuration settings essential for processing, emphasizing reliance on `CodiLayConfig` for managing settings crucial for legacy compatibility.\n- **`wire_073`:** Links `codilay_legacy.py` to `codilay.docstore.DocStore`, showing how documentation storage and management are handled as a pivotal part of content generation.\n- **`wire_074`:** Establishes interaction between `codilay_legacy.py` and `codilay.llm_client.LLMClient`, indicating the use of language models for task processing in documentation.\n- **`wire_075`:** Maps the planning tasks conducted by `codilay.planner.Planner`, vital for constructing processing sequences in the legacy interface.\n- **`wire_076`:** Highlights how `codilay.legacy.py` utilizes `codilay.processor.Processor` to maintain standardized processing routines in file handling.\n- **`wire_077`:** Describes the use of `codilay.scanner.Scanner` within `codilay_legacy.py` for detecting file changes, crucial for deciding processing actions.\n- **`wire_078`:** Illustrates tracking via `codilay.state.AgentState`, managing documentation processing state and persona details.\n- **`wire_079`:** Details user interaction management and output formatting within `codilay.ui.UI`, emphasizing user experience enhancement.\n- **`wire_080`:** Shows how `codilay.wire_manager.WireManager` manages wire states, emphasizing dynamic unresolved reference management critical for legacy operations.",
     "parallel-orchestrator-module": "The Parallel Orchestrator module implements a tier-based parallel processing engine for file documentation. It ensures orderly and efficient handling of files according to their dependencies and allows both parallel and sequential execution based on tiers derived from the dependency graph.\n\n### Architecture\nThe orchestrator's architecture is centered around a `Central Wire Bus` which synchronizes multiple `Worker` threads. Each worker updates a `DocStore` with locked access to maintain consistency and prevent race conditions.\n\n1. **Central Wire Bus**: Manages and synchronizes wire state changes in a shared, thread-safe manner.\n2. **Workers**: Run as threads, each assigned a file. They obtain a 'frozen' snapshot of the wire state to work independently yet safely.\n3. **DocStore**: Responsible for storing documentation results from workers and reconciling them across tier boundaries.\n\n### Processing Flow\n1. Build a dependency graph to identify processing tiers through import analysis.\n2. Compute tiers using topological sorting for execution order.\n3. For each tier, process files:\n   - Files within the same tier are processed in parallel using a thread pool.\n   - Workers process files, updating results back to the central DocStore.\n   - At tier boundaries, contexts are synchronized across all wires.\n4. Process parked files sequentially once full context is available.\n5. Finally, run a sequential self-review across generated sections to ensure consistency and completeness.\n\n### Key Guarantees\n- Parallel execution only occurs for files without interdependencies.\n- Frozen wire snapshots ensure stability and consistency during processing.\n- Wire mutations are safely handled through the locked `WireBus` interface.\n- Tier boundary synchronizations maintain coherent document and wire states.\n- Sequential passes review outputs from parallel sessions to catch inconsistencies.",
-    "dependency-graph": "| From | To | Type | Summary |\n|------|----|------|--------|\n| `CONTRIBUTING.md` | `CODE_OF_CONDUCT.md` | unknown | Eagerly resolved reference to CODE_OF_CONDUCT.md |\n| `multi_provider_support.md` | `file:///Users/harmanpreetsingh/Public/Code/codilay/src/codilay/config.py` | config |  |\n| `multi_provider_support.md` | `file:///Users/harmanpreetsingh/Public/Code/codilay/src/codilay/llm_client.py` | import |  |\n| `src/codilay/docstore.py` | `re` | import | Eagerly resolved reference to re |\n| `src/codilay/retriever.py` | `re` | import | Eagerly resolved reference to re |\n| `persistent_settings_summary.md` | `file:///Users/harmanpreetsingh/Public/Code/codilay/src/codilay/settings.py` | import |  |\n| `vscode-extension/src/extension.ts` | `vscode` | import | Eagerly resolved reference to vscode |\n| `persistent_settings_summary.md` | `file:///Users/harmanpreetsingh/Public/Code/codilay/src/codilay/menu.py` | import |  |\n| `src/codilay/triage_feedback.py` | `triage.py` | model |  |\n| `src/codilay/processor.py` | `codilay.wire_manager.WireManager` | import |  |\n| `codilay_legacy.py` | `codilay.config.CodiLayConfig` | import |  |\n| `codilay_legacy.py` | `codilay.docstore.DocStore` | import |  |\n| `codilay_legacy.py` | `codilay.llm_client.LLMClient` | import |  |\n| `codilay_legacy.py` | `codilay.planner.Planner` | import |  |\n| `codilay_legacy.py` | `codilay.processor.Processor` | import |  |\n| `codilay_legacy.py` | `codilay.scanner.Scanner` | import |  |\n| `codilay_legacy.py` | `codilay.state.AgentState` | import |  |\n| `codilay_legacy.py` | `codilay.ui.UI` | import |  |\n| `codilay_legacy.py` | `codilay.wire_manager.WireManager` | import |  |\n| `src/codilay/parallel_orchestrator.py` | `codilay.dependency_graph.DependencyGraph` | import |  |\n| `src/codilay/parallel_orchestrator.py` | `codilay.docstore.DocStore` | import |  |\n| `src/codilay/parallel_orchestrator.py` | `codilay.processor.Processor` | import |  |\n| `src/codilay/parallel_orchestrator.py` | `codilay.scanner.Scanner` | import |  |\n| `src/codilay/parallel_orchestrator.py` | `codilay.state.AgentState` | import |  |\n| `src/codilay/parallel_orchestrator.py` | `codilay.wire_bus.WireBus` | import |  |\n| `src/codilay/parallel_orchestrator.py` | `codilay.wire_bus.WireEvent` | import |  |\n| `multi_provider_support.md` | `file:///Users/harmanpreetsingh/Public/Code/codilay/src/codilay/ui.py` | import | Resolved by processing src/codilay/ui.py |\n",
-    "unresolved-references": "### Missing or Dead References\n| From | To | Type | Notes |\n|------|----|------|-------|\n| `multi_provider_support.md` | `file:///Users/harmanpreetsingh/Public/Code/codilay/src/codilay/cli.py` | import | CLI support for multiple LLM providers and base URL setting |\n| `persistent_settings_summary.md` | `file:///Users/harmanpreetsingh/Public/Code/codilay/src/codilay/cli.py` | import | File containing CLI enhancements to support the new features. |\n\n### Configuration & Environment Dependencies\n| From | To | Type | Notes |\n|------|----|------|-------|\n| `src/codilay/__main__.py` | `codilay.cli` | import | Imports the CLI module to execute command-line commands when CodiLay is run as a module. |\n| `src/codilay/__main__.py` | `cli()` | call | Calls the `cli` function to start the CodiLay command-line interface. |\n| `src/codilay/chatstore.py` | `codilay.prompts.promote_to_doc_prompt` | import | Used in `promote_to_doc` method to format chat messages into documentation sections. |\n| `src/codilay/chatstore.py` | `codilay.prompts.memory_extraction_prompt` | import | Used in `extract_and_store_memory` for memory extraction operations involving LLM. |\n| `src/codilay/exporter.py` | `codilay.state.AgentState` | import | The AIExporter relies on the AgentState to load section indexing and content data necessary for generating the export. |\n| `src/codilay/planner.py` | `codilay.llm_client.LLMClient` | import | The Planner requires the LLMClient to interact with the language model for generating the processing plan. |\n| `src/codilay/planner.py` | `codilay.prompts.planning_prompt` | import | Used to construct the prompt sent to the LLM for planning file processing. |\n| `src/codilay/planner.py` | `codilay.prompts.system_prompt` | import | Used to create the system-level context for the LLM call in file planning. |\n| `src/codilay/planner.py` | `codilay.state.AgentState` | import | Maintains the current agent state which is passed into the plan method as context. |\n| `src/codilay/processor.py` | `codilay.chunker.Chunker` | import | Handles file chunking operations for processing large files. |\n| `src/codilay/processor.py` | `codilay.docstore.DocStore` | import | Stores and manages documentation sections and their content. |\n| `src/codilay/processor.py` | `codilay.llm_client.LLMClient` | import | Interacts with the LLM for processing file content. |\n| `src/codilay/processor.py` | `codilay.prompts` | import | Provides templates for generating LLM prompts during processing. |\n| `src/codilay/processor.py` | `codilay.state.AgentState` | import | Represents the current state of the processing agent. |\n| `src/codilay/triage.py` | `codilay.prompts.system_prompt` | import | Used to generate the system prompt before making an AI call for smart triage. |\n| `src/codilay/triage.py` | `codilay.prompts.triage_prompt` | import | Used to generate the triage-specific user prompt for the AI model in smart mode. |\n| `src/codilay/wire_bus.py` | `codilay.wire_manager.WireManager` | import | The WireBus module extends the functionalities of WireManager by implementing thread-safe operations and event subscriptions. |\n| `src/codilay/watcher.py` | `codilay.config.CodiLayConfig` | import | Involved in loading configuration settings necessary for processing file changes. |\n| `src/codilay/watcher.py` | `codilay.docstore.DocStore` | import | Used to manage and update documentation sections from file changes. |\n| `src/codilay/watcher.py` | `codilay.llm_client.LLMClient` | import | Handles communications with LLMs to process and generate documentation from changed files. |\n| `src/codilay/watcher.py` | `codilay.processor.Processor` | import | Responsible for processing individual files that have changed to update the documentation. |\n| `src/codilay/watcher.py` | `codilay.settings.Settings` | import | Loads and applies settings to influence watcher behavior and LLM interaction. |\n| `src/codilay/watcher.py` | `codilay.state.AgentState` | import | Keeps track of the current open wires, processed files, and state of documentation. |\n| `src/codilay/watcher.py` | `codilay.ui.UI` | import | Provides a user interface for reporting status, errors, and progress of documentation tasks. |\n| `src/codilay/watcher.py` | `codilay.wire_manager.WireManager` | import | Manages open and closed wires to ensure all dependencies and references are synchronized. |\n\n<details>\n<summary><b>External Libraries & Packages (33)</b></summary>\n\n| From | To | Type | Notes |\n|------|----|------|-------|\n| `.github/workflows/ci.yml` | `actions/checkout@v4` | import | Used to check out the repository at the start of the job |\n| `.github/workflows/ci.yml` | `actions/setup-python@v5` | import | Used to set up Python environments with caching for pip |\n| `.github/workflows/ci.yml` | `ruff` | call | Static code analysis and formatting enforcement |\n| `.github/workflows/ci.yml` | `pytest` | call | Testing framework used to run the project's test suite |\n| `src/codilay/doc_differ.py` | `difflib` | import | Used for computing diffs between versions of documentation content |\n| `src/codilay/doc_differ.py` | `json` | import | Handles serialization and deserialization of documentation state snapshots |\n| `src/codilay/doc_differ.py` | `os` | import | Facilitates file management and directory operations for storing snapshots |\n| `src/codilay/doc_differ.py` | `re` | import | Supports regular expression operations to identify code references within documentation |\n| `src/codilay/doc_differ.py` | `dataclasses` | import | Provides the data class decorator for structured data storage |\n| `src/codilay/doc_differ.py` | `datetime` | import | Used for timestamping snapshots of documentation state |\n| `src/codilay/llm_client.py` | `anthropic` | import | Import rate-limit error class to handle Anthropic-specific API rate limits. |\n| `src/codilay/llm_client.py` | `openai` | import | Import rate-limit error class to handle OpenAI-specific API rate limits. |\n| `src/codilay/llm_client.py` | `tiktoken` | import | Library used for token counting in managing input and output sizes. |\n| `src/codilay/docstore.py` | `datetime` | import | Handles date and time functionalities for rendering document generation timestamps. |\n| `src/codilay/docstore.py` | `timezone` | import | Provides timezone information for generating UTC time stamps. |\n| `src/codilay/retriever.py` | `collections.Counter` | import | Used to compute term frequencies within documents and for query indexing. |\n| `src/codilay/retriever.py` | `dataclasses.dataclass` | import | Used for structuring data, specifically representing a scored documentation section. |\n| `src/codilay/scheduler.py` | `rich.console` | import | Used for styled console outputs, aiding in user-friendly terminal interactions. |\n| `src/codilay/scheduler.py` | `json` | import | Utilized to handle the serialization and deserialization of the scheduler configuration. |\n| `src/codilay/scheduler.py` | `os` | import | Enables file and directory path operations essential for configuration management and PID file handling. |\n| `src/codilay/scheduler.py` | `subprocess` | import | Facilitates execution of shell commands to integrate git operations, such as fetching new commit info. |\n| `src/codilay/scheduler.py` | `sys` | import | Accesses system-specific parameters and functions, used for executing Python modules. |\n| `src/codilay/scheduler.py` | `time` | import | Allows time-related operations including sleep to handle polling intervals. |\n| `src/codilay/scheduler.py` | `datetime` | import | Provides date and time functionalities to timestamp scheduler operations and configuration updates. |\n| `src/codilay/scheduler.py` | `Optional` | import | Type hint for optional parameters, aiding in clarity and type checking. |\n| `src/codilay/watcher.py` | `watchdog.events.FileSystemEventHandler` | import | Used to create a custom event handler that detects file system changes. |\n| `src/codilay/watcher.py` | `watchdog.observers.Observer` | import | Essential for setting up a file system observer that monitors the project directory. |\n| `src/codilay/ui.py` | `rich.console` | import | Rich Console provides the foundation for rendering advanced, styled CLI outputs. |\n| `src/codilay/ui.py` | `rich.panel` | import | Rich Panel is used for containing and displaying information elegantly in bordered divisions. |\n| `src/codilay/ui.py` | `rich.table` | import | Rich Table is used for displaying tabular data in a readable, styled format. |\n| `src/codilay/ui.py` | `rich.prompt` | import | Rich Prompt handles user input in an interactive and styled manner. |\n| `src/codilay/ui.py` | `fnmatch` | import | Used to match file paths with glob patterns, assisting in custom file selection. |\n| `src/codilay/ui.py` | `contextlib.contextmanager` | import | Used to implement a simple spinner via the console status feature. |\n\n</details>\n"
+    "dependency-graph": "| From | To | Type | Summary |\n|------|----|------|--------|\n| `CONTRIBUTING.md` | `CODE_OF_CONDUCT.md` | unknown | Eagerly resolved reference to CODE_OF_CONDUCT.md |\n| `multi_provider_support.md` | `file:///Users/harmanpreetsingh/Public/Code/codilay/src/codilay/config.py` | config |  |\n| `multi_provider_support.md` | `file:///Users/harmanpreetsingh/Public/Code/codilay/src/codilay/llm_client.py` | import |  |\n| `src/codilay/docstore.py` | `re` | import | Eagerly resolved reference to re |\n| `src/codilay/retriever.py` | `re` | import | Eagerly resolved reference to re |\n| `persistent_settings_summary.md` | `file:///Users/harmanpreetsingh/Public/Code/codilay/src/codilay/settings.py` | import |  |\n| `vscode-extension/src/extension.ts` | `vscode` | import | Eagerly resolved reference to vscode |\n| `persistent_settings_summary.md` | `file:///Users/harmanpreetsingh/Public/Code/codilay/src/codilay/menu.py` | import |  |\n| `src/codilay/triage_feedback.py` | `triage.py` | model |  |\n| `src/codilay/processor.py` | `codilay.wire_manager.WireManager` | import |  |\n| `src/codilay/parallel_orchestrator.py` | `codilay.dependency_graph.DependencyGraph` | import |  |\n| `src/codilay/parallel_orchestrator.py` | `codilay.docstore.DocStore` | import |  |\n| `src/codilay/parallel_orchestrator.py` | `codilay.processor.Processor` | import |  |\n| `src/codilay/parallel_orchestrator.py` | `codilay.scanner.Scanner` | import |  |\n| `src/codilay/parallel_orchestrator.py` | `codilay.state.AgentState` | import |  |\n| `src/codilay/parallel_orchestrator.py` | `codilay.wire_bus.WireBus` | import |  |\n| `src/codilay/parallel_orchestrator.py` | `codilay.wire_bus.WireEvent` | import |  |\n| `multi_provider_support.md` | `file:///Users/harmanpreetsingh/Public/Code/codilay/src/codilay/ui.py` | import | Resolved by processing src/codilay/ui.py |\n| `codilay_legacy.py` | `codilay.config.CodiLayConfig` | import |  |\n| `codilay_legacy.py` | `codilay.docstore.DocStore` | import |  |\n| `codilay_legacy.py` | `codilay.llm_client.LLMClient` | import |  |\n| `codilay_legacy.py` | `codilay.planner.Planner` | import |  |\n| `codilay_legacy.py` | `codilay.processor.Processor` | import |  |\n| `codilay_legacy.py` | `codilay.scanner.Scanner` | import |  |\n| `codilay_legacy.py` | `codilay.state.AgentState` | import |  |\n| `codilay_legacy.py` | `codilay.ui.UI` | import |  |\n| `codilay_legacy.py` | `codilay.wire_manager.WireManager` | import |  |\n",
+    "unresolved-references": "### Missing or Dead References\n| From | To | Type | Notes |\n|------|----|------|-------|\n| `multi_provider_support.md` | `file:///Users/harmanpreetsingh/Public/Code/codilay/src/codilay/cli.py` | import | CLI support for multiple LLM providers and base URL setting |\n| `persistent_settings_summary.md` | `file:///Users/harmanpreetsingh/Public/Code/codilay/src/codilay/cli.py` | import | File containing CLI enhancements to support the new features. |\n| `src/codilay/__main__.py` | `codilay.cli` | import | Imports the CLI module to execute command-line commands when CodiLay is run as a module. |\n| `src/codilay/__main__.py` | `cli()` | call | Calls the `cli` function to start the CodiLay command-line interface. |\n| `src/codilay/chatstore.py` | `codilay.prompts.promote_to_doc_prompt` | import | Used in `promote_to_doc` method to format chat messages into documentation sections. |\n| `src/codilay/chatstore.py` | `codilay.prompts.memory_extraction_prompt` | import | Used in `extract_and_store_memory` for memory extraction operations involving LLM. |\n| `src/codilay/exporter.py` | `codilay.state.AgentState` | import | The AIExporter relies on the AgentState to load section indexing and content data necessary for generating the export. |\n| `src/codilay/planner.py` | `codilay.llm_client.LLMClient` | import | The Planner requires the LLMClient to interact with the language model for generating the processing plan. |\n| `src/codilay/planner.py` | `codilay.prompts.planning_prompt` | import | Used to construct the prompt sent to the LLM for planning file processing. |\n| `src/codilay/planner.py` | `codilay.prompts.system_prompt` | import | Used to create the system-level context for the LLM call in file planning. |\n| `src/codilay/planner.py` | `codilay.state.AgentState` | import | Maintains the current agent state which is passed into the plan method as context. |\n| `src/codilay/processor.py` | `codilay.chunker.Chunker` | import | Handles file chunking operations for processing large files. |\n| `src/codilay/processor.py` | `codilay.docstore.DocStore` | import | Stores and manages documentation sections and their content. |\n| `src/codilay/processor.py` | `codilay.llm_client.LLMClient` | import | Interacts with the LLM for processing file content. |\n| `src/codilay/processor.py` | `codilay.prompts` | import | Provides templates for generating LLM prompts during processing. |\n| `src/codilay/processor.py` | `codilay.state.AgentState` | import | Represents the current state of the processing agent. |\n| `src/codilay/triage.py` | `codilay.prompts.system_prompt` | import | Used to generate the system prompt before making an AI call for smart triage. |\n| `src/codilay/triage.py` | `codilay.prompts.triage_prompt` | import | Used to generate the triage-specific user prompt for the AI model in smart mode. |\n| `src/codilay/wire_bus.py` | `codilay.wire_manager.WireManager` | import | The WireBus module extends the functionalities of WireManager by implementing thread-safe operations and event subscriptions. |\n| `src/codilay/watcher.py` | `codilay.config.CodiLayConfig` | import | Involved in loading configuration settings necessary for processing file changes. |\n| `src/codilay/watcher.py` | `codilay.docstore.DocStore` | import | Used to manage and update documentation sections from file changes. |\n| `src/codilay/watcher.py` | `codilay.llm_client.LLMClient` | import | Handles communications with LLMs to process and generate documentation from changed files. |\n| `src/codilay/watcher.py` | `codilay.processor.Processor` | import | Responsible for processing individual files that have changed to update the documentation. |\n| `src/codilay/watcher.py` | `codilay.settings.Settings` | import | Loads and applies settings to influence watcher behavior and LLM interaction. |\n| `src/codilay/watcher.py` | `codilay.state.AgentState` | import | Keeps track of the current open wires, processed files, and state of documentation. |\n| `src/codilay/watcher.py` | `codilay.ui.UI` | import | Provides a user interface for reporting status, errors, and progress of documentation tasks. |\n| `src/codilay/watcher.py` | `codilay.wire_manager.WireManager` | import | Manages open and closed wires to ensure all dependencies and references are synchronized. |\n\n<details>\n<summary><b>External Libraries & Packages (33)</b></summary>\n\n| From | To | Type | Notes |\n|------|----|------|-------|\n| `.github/workflows/ci.yml` | `actions/checkout@v4` | import | Used to check out the repository at the start of the job |\n| `.github/workflows/ci.yml` | `actions/setup-python@v5` | import | Used to set up Python environments with caching for pip |\n| `.github/workflows/ci.yml` | `ruff` | call | Static code analysis and formatting enforcement |\n| `.github/workflows/ci.yml` | `pytest` | call | Testing framework used to run the project's test suite |\n| `src/codilay/doc_differ.py` | `difflib` | import | Used for computing diffs between versions of documentation content |\n| `src/codilay/doc_differ.py` | `json` | import | Handles serialization and deserialization of documentation state snapshots |\n| `src/codilay/doc_differ.py` | `os` | import | Facilitates file management and directory operations for storing snapshots |\n| `src/codilay/doc_differ.py` | `re` | import | Supports regular expression operations to identify code references within documentation |\n| `src/codilay/doc_differ.py` | `dataclasses` | import | Provides the data class decorator for structured data storage |\n| `src/codilay/doc_differ.py` | `datetime` | import | Used for timestamping snapshots of documentation state |\n| `src/codilay/llm_client.py` | `anthropic` | import | Import rate-limit error class to handle Anthropic-specific API rate limits. |\n| `src/codilay/llm_client.py` | `openai` | import | Import rate-limit error class to handle OpenAI-specific API rate limits. |\n| `src/codilay/llm_client.py` | `tiktoken` | import | Library used for token counting in managing input and output sizes. |\n| `src/codilay/docstore.py` | `datetime` | import | Handles date and time functionalities for rendering document generation timestamps. |\n| `src/codilay/docstore.py` | `timezone` | import | Provides timezone information for generating UTC time stamps. |\n| `src/codilay/retriever.py` | `collections.Counter` | import | Used to compute term frequencies within documents and for query indexing. |\n| `src/codilay/retriever.py` | `dataclasses.dataclass` | import | Used for structuring data, specifically representing a scored documentation section. |\n| `src/codilay/scheduler.py` | `rich.console` | import | Used for styled console outputs, aiding in user-friendly terminal interactions. |\n| `src/codilay/scheduler.py` | `json` | import | Utilized to handle the serialization and deserialization of the scheduler configuration. |\n| `src/codilay/scheduler.py` | `os` | import | Enables file and directory path operations essential for configuration management and PID file handling. |\n| `src/codilay/scheduler.py` | `subprocess` | import | Facilitates execution of shell commands to integrate git operations, such as fetching new commit info. |\n| `src/codilay/scheduler.py` | `sys` | import | Accesses system-specific parameters and functions, used for executing Python modules. |\n| `src/codilay/scheduler.py` | `time` | import | Allows time-related operations including sleep to handle polling intervals. |\n| `src/codilay/scheduler.py` | `datetime` | import | Provides date and time functionalities to timestamp scheduler operations and configuration updates. |\n| `src/codilay/scheduler.py` | `Optional` | import | Type hint for optional parameters, aiding in clarity and type checking. |\n| `src/codilay/watcher.py` | `watchdog.events.FileSystemEventHandler` | import | Used to create a custom event handler that detects file system changes. |\n| `src/codilay/watcher.py` | `watchdog.observers.Observer` | import | Essential for setting up a file system observer that monitors the project directory. |\n| `src/codilay/ui.py` | `rich.console` | import | Rich Console provides the foundation for rendering advanced, styled CLI outputs. |\n| `src/codilay/ui.py` | `rich.panel` | import | Rich Panel is used for containing and displaying information elegantly in bordered divisions. |\n| `src/codilay/ui.py` | `rich.table` | import | Rich Table is used for displaying tabular data in a readable, styled format. |\n| `src/codilay/ui.py` | `rich.prompt` | import | Rich Prompt handles user input in an interactive and styled manner. |\n| `src/codilay/ui.py` | `fnmatch` | import | Used to match file paths with glob patterns, assisting in custom file selection. |\n| `src/codilay/ui.py` | `contextlib.contextmanager` | import | Used to implement a simple spinner via the console status feature. |\n\n</details>\n"
   },
   "processed": [
     ".editorconfig",
@@ -1734,9 +1734,9 @@
     "codilay_legacy.py",
     "codilay/links.json"
   ],
-  "last_commit": "c7b105ff256f1a3aabc2c52cc08cc45cb063d9f9",
-  "last_commit_short": "c7b105f",
-  "last_run": "2026-03-16T20:00:33.585251+00:00",
+  "last_commit": "485e1428ac86c2e28674ef50e8472d5920ce47ef",
+  "last_commit_short": "485e142",
+  "last_run": "2026-03-16T20:05:13.688520+00:00",
   "file_hashes": {
     ".editorconfig": "b20f2136dffccdc36ba09cba6655c56f",
     ".gitattributes": "94a5c69325ce3b892e53a8ec0a36e1e4",
@@ -1766,7 +1766,7 @@
     "src/codilay/docstore.py": "d346500734aae344f7827d656362b38c",
     "src/codilay/prompts.py": "034c5a5c9a7178950adcf815c17a5fef",
     "src/codilay/retriever.py": "02730b511c4428afaed51b2d13a9bdd5",
-    "src/codilay/scanner.py": "26f8f5dc1e1db8b736cad9de5e07f534",
+    "src/codilay/scanner.py": "058a3a3b26d07a27bb87762fb7ec5877",
     "src/codilay/scheduler.py": "c684477d80eef25997b871286212d76f",
     "src/codilay/search.py": "f89c8f20ec8ac14b79c025ebc2aae104",
     "src/codilay/settings.py": "5ea6d2a980de0ad60cb37a3af462f36c",
@@ -1787,9 +1787,9 @@
     "src/codilay/wire_bus.py": "50ab9a88bbeec68858d998cacc0f0861",
     "src/codilay/parallel_orchestrator.py": "f28f52327fc11cf7167540535c94fad6",
     "src/codilay/server.py": "19cee0b75acb77764ebd0f2fcf418008",
-    "src/codilay/watcher.py": "e062d640ccfbeb05748ac525a3546cda",
-    "codilay_legacy.py": "03b5f06d3789fb9a7ef15e99d732c465",
-    "codilay/links.json": "3a5faa0c862bc3cabf85a81da3229b8b"
+    "src/codilay/watcher.py": "dcd8b6ee7ef683d63b83b7e78c1f14b5",
+    "codilay_legacy.py": "fe0bab4141e72f4fdff6865450a3420e",
+    "codilay/links.json": "c60c7423430c8b57e126a8a1ae0e31a4"
   },
-  "saved_at": "2026-03-16T20:00:33.590569+00:00"
+  "saved_at": "2026-03-16T20:05:13.694086+00:00"
 }
