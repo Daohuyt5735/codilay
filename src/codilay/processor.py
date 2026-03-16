@@ -331,7 +331,7 @@ class Processor:
                             context=wire_data.get("context", ""),
                         )
 
-    def finalize(self):
+    def finalize(self, file_tree: str):
         """Run the finalization pass."""
         section_index = self.docstore.get_section_index()
         open_wires = self.wire_mgr.get_open_wires()
@@ -347,7 +347,8 @@ class Processor:
                 except (IOError, OSError):
                     parked_summaries[path] = "(Could not read file)"
 
-        user_prompt = finalize_prompt(section_index, open_wires, parked_summaries)
+        user_prompt = finalize_prompt(file_tree, section_index, open_wires, parked_summaries)
+
         result = self.llm.call(self._sys_prompt, user_prompt)
 
         if "error" in result:

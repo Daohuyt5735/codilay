@@ -1,144 +1,162 @@
 # 🦅 CodiLay
 
-> **AI Agent for Codebase Documentation** — A detective that traces wires through your codebase to build a living reference.
+> **The Living Reference for Your Codebase** — An AI agent that traces the "wires" of your project to build, update, and chat with your documentation.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python: 3.11+](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![PRs: Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
-
----
-
-CodiLay is a powerful CLI agent that reads unfamiliar codebases and produces a structured Markdown reference. Unlike static docs, CodiLay uses **The Wire Model** to understand how modules connect, what data flows between them, and *why* the architecture is built the way it is.
+[![License: MIT](https://img.shields.io/badge/License-MIT-gold.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+[![Python: 3.11+](https://img.shields.io/badge/Python-3.11+-blue.svg?style=flat-square)](https://www.python.org/downloads/)
+[![PRs: Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](CONTRIBUTING.md)
 
 ---
 
-## 🌟 Vision
-
-CodiLay operates like a researcher tracing wires through a complex circuit. It reads file by file, building context incrementally, resolving unknowns, and never carrying more in memory than it needs to.
-
-The result is a comprehensive abstract view of:
-- **What** is happening (purpose of each module)
-- **Where** it is happening (file locations, project structure)
-- **How** it is happening (data flow, call chains, dependencies)
-- **Why** things connect (cross-references, linkage graph)
+CodiLay is not just a static documentation generator; it's an **agentic documentary researcher**. It reads your code, understands module connections via **The Wire Model**, and maintains a persistent, searchable knowledge base that you can browse via a Web UI or talk to through an interactive Chat.
 
 ---
 
-## ⚡️ Quick Start
+## 🚀 Experience CodiLay
 
-### Installation
+### 1. Installation
 
 ```bash
-# Clone the repository
+# Clone and install
 git clone https://github.com/HarmanPreet-Singh-XYT/codilay.git
 cd codilay
 
-# Install the package globally
-pip install .
+# Install with Web UI support
+pip install -e ".[serve]"
 ```
 
-### Basic Usage
+### 2. First-Time Setup
+Forget about exporting API keys every time. Run the setup wizard to securely store your keys.
 
 ```bash
-# Document the current directory
-export ANTHROPIC_API_KEY=your-key
-codilay .
+codilay setup
+```
 
-# Use a specific provider (supports 10+ providers)
-codilay . -p gemini
+### 3. Launch the Hub
+Simply running `codilay` with no arguments opens the interactive control center.
 
-# Use local Ollama (no API key required)
-codilay . -p ollama
+```bash
+codilay
 ```
 
 ---
 
-## 🔌 The Wire Model
+## 🛠 Features
 
-The core abstraction of CodiLay is the **Wire**. A wire represents an **unresolved reference** — an import, a function call, a model reference, or an environment variable that a file mentions but has not yet been explained.
+### 🧠 The Wire Model
+CodiLay treats every import, function call, and variable reference as a **Wire**. 
+- **Open Wires**: Unresolved references that the agent is "hunting" for.
+- **Closed Wires**: Successfully traced connections that form segments of the dependency graph.
 
-States:
-- **OPEN**: A reference has been seen, but its definition hasn't been documented yet. Open wires influence the planning queue.
-- **CLOSED**: Both ends of the connection have been documented. The link is recorded in `links.json`, and the wire is retired to keep the AI's context window lean.
+### ⚡️ Smart Triage
+Before burning tokens, CodiLay performs a high-speed **Triage Phase**. It classifies files into:
+- **Core**: Full architectural analysis and documentation.
+- **Skim**: Metadata and signatures only (saves tokens on simple utilities).
+- **Skip**: Ignores boilerplate, generated code, and platform-specific noise.
 
-Any wires remaining open at the end of a run represent external packages, ignored files, or dead code.
+### 🔄 Git-Aware Incremental Updates
+CodiLay is repo-aware. If you've only changed 2 files in a 500-file project, `codilay .` will:
+1. Detect the delta via Git.
+2. Invalidate only the affected documentation sections.
+3. Re-open wires related to the changed code.
+4. Re-calculate the local impact to keep your `CODEBASE.md` current.
+
+### 💬 Interactive Chat & Memory
+Ask questions about your codebase using `codilay chat .`. 
+- **RAG + Deep Search**: It uses your documentation for fast answers but can "escalate" to reading source code for implementation details.
+- **Memory**: The agent remembers your preferences and facts about the codebase across sessions.
+- **Promote to Doc**: Found a great explanation in chat? Use `/promote` to turn the AI's answer into a permanent section of your documentation.
+
+### 🌐 Web Documentation Browser
+Prefer a GUI? Launch the interactive documentation viewer:
+
+```bash
+codilay serve .
+```
 
 ---
 
-## 🏗 System Architecture
+## ⌨️ CLI Reference
 
-CodiLay follows a multi-phase agentic loop:
-
-1.  **Bootstrap**: Scans the project root, respects `.gitignore`, and pre-loads existing documentation.
-2.  **Triage**: A fast, AI-driven classification step that categorizes files into **CORE** (full documentation), **SKIM** (metadata only), or **SKIP** (generated/platform code).
-3.  **Planning**: Determines the optimal processing order based on file hierarchy and established entry points.
-4.  **Processing Loop**: The main loop where files are read and processed by the LLM. Large files are handled via a **Skeleton Pass** and subsequent **Detail Passes** to prevent context overflow.
-5.  **Finalize**: Assembles the final `CODEBASE.md`, generates a dependency graph, and surfaces unresolved references.
+| Command | Action |
+|:---|:---|
+| `codilay` | Launch the **Interactive Menu** |
+| `codilay .` | Document the current directory (incremental) |
+| `codilay chat .` | Start a **Chat session** about the project |
+| `codilay serve .` | Launch the **Web UI** |
+| `codilay status .` | Show documentation coverage and stale sections |
+| `codilay diff .` | See what changed since the last documentation run |
+| `codilay setup` | Configure default provider, model, and API keys |
+| `codilay keys` | Manage stored API keys |
+| `codilay clean .` | Wipe all generated artifacts |
 
 ---
 
-## ⚙️ Configuration
+## ⚙️ Project Configuration
 
-You can place a `codilay.config.json` at your project root to customize the agent's behavior.
+Place a `codilay.config.json` in your root for project-specific behavior:
 
 ```json
 {
-  "ignore": ["**/*.test.js", "dist/"],
-  "notes": "This is a fintech project. Security is a high priority.",
-  "instructions": "Focus on data flow between services. Highlight database schema usage.",
-  "entryHint": "src/main.py",
+  "ignore": ["dist/**", "**/tests/**"],
+  "notes": "This is a React/Next.js frontend using Tailwind.",
+  "instructions": "Focus on data-fetching patterns and state management.",
   "llm": {
     "provider": "anthropic",
-    "model": "claude-3-opus-20240229",
-    "maxTokensPerCall": 4096
-  },
-  "triage": {
-    "mode": "smart",
-    "includeTests": false
+    "model": "claude-3-5-sonnet-latest"
   }
 }
 ```
 
-### Supported Providers
-
-CodiLay supports **10+ LLM providers** via the `--provider` flag:
-- **Anthropic** (Default), **OpenAI**, **Google Gemini**, **Ollama** (Local), **DeepSeek**, **Groq**, **Mistral**, **xAI**, **Llama Cloud**, and any **Custom** OpenAI-compatible endpoint.
+### 🌍 Multi-Provider Support
+CodiLay supports **10+ providers** including:
+- **Local**: Ollama (no key needed)
+- **Top Tier**: Anthropic, OpenAI, Google Gemini
+- **Performance**: Groq, DeepSeek, Mistral
+- **Custom**: Any OpenAI-compatible endpoint
 
 ---
 
 ## 📂 Project Structure
 
-```
+```text
 codilay/
-├── codilay.py           # CLI entry point script
 ├── src/codilay/
-│   ├── scanner.py       # File system traversal
-│   ├── triage.py        # AI-driven file classification
-│   ├── planner.py       # Execution order planning
-│   ├── processor.py     # Core agentic loop
-│   ├── wire_manager.py  # Dependency link tracking
-│   ├── docstore.py      # Markdown assembly & caching
-│   └── llm_client.py    # Multi-provider LLM connector
-└── output/              # Generated documentation artifacts
+│   ├── cli.py           # Multi-command CLI & Path Routing
+│   ├── processor.py     # Main Agentic Loop & Chunking logic
+│   ├── wire_manager.py  # Dependency & Reference tracking
+│   ├── docstore.py      # Markdown assembly & Invalidation
+│   ├── chatstore.py     # Chat history & Persistent Memory
+│   ├── server.py        # FastAPI Backend for Web UI
+│   └── web/             # Web UI Frontend assets
+├── codilay/             # Output folder for your project
+│   ├── CODEBASE.md      # The final living reference
+│   ├── links.json       # Traced wires & Dependency data
+│   └── .codilay_state.json # Internal state for incremental runs
+└── pyproject.toml       # Build system & Dependencies
 ```
-
----
-
-## 🛡 Security
-
-We take security seriously. Please read our [SECURITY.md](SECURITY.md) for more details on vulnerability reporting and data privacy. CodiLay never carries local API keys; always use environment variables.
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Whether it's adding a new LLM provider, improving the processing logic, or fixing a bug, please check [CONTRIBUTING.md](CONTRIBUTING.md) to get started.
+We love contributors! Trace your own wires into the project by checking out [CONTRIBUTING.md](CONTRIBUTING.md).
+
+1.  **Fork** the repo.
+2.  **Install** dev deps: `pip install -e ".[dev]"`
+3.  **Test**: `pytest`
+4.  **Submit** a PR.
 
 ---
 
 ## 📜 License
 
-Distributed under the **MIT License**. See [LICENSE](LICENSE) for more information.
+Distributed under the **MIT License**. See `LICENSE` for details.
+
+---
+
+*Generated by CodiLay — Documenting the future, one wire at a time.*
+SE) for more information.
 
 ---
 

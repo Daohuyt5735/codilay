@@ -30,17 +30,21 @@ dependencies = [
     "click>=8.1.7",
     "rich>=13.9.0",
 ]
+[project.optional-dependencies]
+serve = [
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+]
+dev = [
+    "pytest>=7.0",
+    "ruff>=0.1.0",
+]
 
 [project.urls]
 Homepage = "https://github.com/HarmanPreet-Singh-XYT/codilay"
 Repository = "https://github.com/HarmanPreet-Singh-XYT/codilay"
 Issues = "https://github.com/HarmanPreet-Singh-XYT/codilay/issues"
 Documentation = "https://github.com/HarmanPreet-Singh-XYT/codilay#readme"
-[project.optional-dependencies]
-dev = [
-    "pytest>=7.0",
-    "ruff>=0.1.0",
-]
 
 # THIS IS THE KEY PART — registers the `codilay` command
 [project.scripts]
@@ -48,3 +52,6 @@ codilay = "codilay.cli:cli"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+codilay = ["web/*.html"]

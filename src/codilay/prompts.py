@@ -232,6 +232,7 @@ Respond with ONLY the JSON object."""
 
 
 def finalize_prompt(
+    file_tree: str,
     section_index: dict,
     open_wires: list,
     parked_summaries: dict,
@@ -262,6 +263,9 @@ def finalize_prompt(
 
     return f"""Finalization pass for the codebase documentation.
 
+## Project Structure (Reliable Source of Truth)
+{file_tree}
+
 {index_text}
 
 {wires_text}
@@ -273,12 +277,15 @@ def finalize_prompt(
 Return a JSON object with:
 
 1. **overview**: Comprehensive overview markdown — what this project is, architecture, tech stack, how components fit together, entry points for new developers.
+   IMPORTANT: Only reference files that ACTUALLY EXIST in the provided file tree. Do NOT hallucinate standard filenames (like index.js, app.js, or server.js) if they are not present.
 
-2. **section_updates**: Array of patches to existing sections for final cross-references. Each: {{"section_id": "str", "update_type": "append", "content": "str"}}
+2. **section_updates**: Array of patches to existing sections for final cross-references. Each: {{"section_id": "str", "update_type": "replace", "content": "str"}}
+   Use this to fill in any empty "suggested sections" (like 'Entry Points') with REAL data based on the codebase structure.
 
 3. **wire_classifications**: For each open wire, classify it. Array of: {{"wire_id": "str", "classification": "external_package|missing_file|dead_code|config_dependency|unknown", "note": "str"}}
 
 Respond with ONLY the JSON object."""
+
 
 def skeleton_prompt(
     file_path: str,
@@ -397,6 +404,145 @@ Return a JSON object with:
 5. **park_new**: Files to park
 
 Focus on WHAT this code does and HOW it connects to other parts. Don't just describe syntax — explain purpose, data flow, and business logic.
+
+Respond with ONLY the JSON object."""
+
+
+# ── Chat prompts ──────────────────────────────────────────────────────────────
+
+
+def chat_system_prompt(
+    memory_context: str = "",
+    pinned_context: str = "",
+) -> str:
+    """System prompt for the conversational chat interface."""
+    memory_section = ""
+    if memory_context:
+        memory_section = (
+            "\n\n## What You Know About This User\n"
+            f"{memory_context}\n"
+            "Use this knowledge to give more personalized, contextual answers."
+        )
+
+    pinned_section = ""
+    if pinned_context:
+        pinned_section = (
+            "\n\n## Pinned Knowledge (always relevant)\n"
+            f"{pinned_context}"
+        )
+
+    return f"""You are CodiLay Chat — a codebase assistant that answers questions about a project's code and architecture.
+
+You have access to relevant documentation sections that describe parts of the codebase. Answer the user's question based on this documentation context.
+
+Key guidelines:
+- Be concise and specific. Developers want answers, not essays.
+- Reference specific files, functions, and classes by name.
+- If the documentation doesn't contain enough info, say so honestly and suggest they use deep mode (/deep) to read the actual source.
+- Use markdown formatting for code references and structure.
+- If the user asks a follow-up, use the conversation history for context.
+
+At the end of your response, on a NEW LINE, output:
+CONFIDENCE: X.X (a float between 0.0 and 1.0 indicating how confidently the provided documentation answers the question){memory_section}{pinned_section}"""
+
+
+def chat_user_prompt(
+    question: str,
+    doc_context: str,
+    conversation_history: str = "",
+) -> str:
+    """User prompt for chat — includes retrieved doc context."""
+    history_section = ""
+    if conversation_history:
+        history_section = (
+            f"\n\n## Recent Conversation\n{conversation_history}\n"
+        )
+
+    return f"""{history_section}
+## Relevant Documentation
+{doc_context}
+
+---
+
+Question: {question}"""
+
+
+def memory_extraction_prompt(messages: list) -> str:
+    """
+    Prompt to auto-extract memorable facts from a conversation.
+    Only sends the last N messages to save tokens.
+    """
+    convo_text = ""
+    for msg in messages[-10:]:
+        role = msg.get("role", "unknown").capitalize()
+        content = msg.get("content", "")[:500]
+        convo_text += f"\n{role}: {content}\n"
+
+    return f"""Analyze this conversation and extract any facts worth remembering for future interactions.
+
+## Conversation
+{convo_text}
+
+## Your Task
+
+Extract facts in these categories:
+1. **User preferences** — how they like answers (concise vs detailed, code examples vs prose, etc.)
+2. **Codebase facts** — things established about the project (what modules they own, what patterns they use)
+3. **Frequent topics** — what areas/files/modules they keep asking about
+
+Return a JSON object:
+```json
+{{
+    "facts": [
+        {{"fact": "User prefers code examples over prose", "category": "preference"}},
+        {{"fact": "User works primarily on the payments module", "category": "codebase"}},
+        {{"fact": "Retry logic in services/retry.js is a frequent topic", "category": "topic"}}
+    ],
+    "preferences": {{
+        "response_style": "concise with code examples"
+    }},
+    "topics": ["payments", "retry-logic", "auth-middleware"]
+}}
+```
+
+Only include facts that would genuinely be useful in future conversations. Don't include trivial observations.
+If there's nothing worth remembering, return empty arrays/objects.
+
+Respond with ONLY the JSON object."""
+
+
+def promote_to_doc_prompt(question: str, answer: str) -> str:
+    """
+    Prompt to reformat a chat Q&A into a proper documentation section.
+    """
+    return f"""Reformat this chat Q&A exchange into a proper documentation section for a codebase reference.
+
+## Original Question
+{question}
+
+## Original Answer
+{answer}
+
+## Your Task
+
+Transform this into a clean documentation section. Remove conversational tone, organize the information clearly, and make it suitable for inclusion in a CODEBASE.md reference document.
+
+Return a JSON object:
+```json
+{{
+    "title": "Human-Readable Section Title",
+    "id": "kebab-case-section-id",
+    "content": "Formatted markdown content...",
+    "tags": ["relevant", "tags"]
+}}
+```
+
+Guidelines:
+- Title should describe WHAT is documented, not the question
+- Content should be self-contained — a reader shouldn't need the original question
+- Use proper markdown: headers, code blocks, lists
+- Keep cross-references if the original answer had them
+- Add a brief "Overview" paragraph at the top
 
 Respond with ONLY the JSON object."""
 

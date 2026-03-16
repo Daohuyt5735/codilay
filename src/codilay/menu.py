@@ -128,7 +128,8 @@ def main_menu(settings: Settings) -> Optional[dict]:
         menu.add_row("[4]", "🤖  Change provider & model")
         menu.add_row("[5]", "🔧  Preferences")
         menu.add_row("[6]", "📊  View current settings")
-        menu.add_row("[7]", "❓  Help")
+        menu.add_row("[7]", "💬  Chat with your codebase")
+        menu.add_row("[8]", "❓  Help")
         menu.add_row("[0]", "🚪  Exit")
 
         console.print(menu)
@@ -136,7 +137,7 @@ def main_menu(settings: Settings) -> Optional[dict]:
 
         choice = Prompt.ask(
             "[bold cyan]Select an option[/bold cyan]",
-            choices=["0", "1", "2", "3", "4", "5", "6", "7"],
+            choices=["0", "1", "2", "3", "4", "5", "6", "7", "8"],
             default="1",
         )
 
@@ -165,6 +166,11 @@ def main_menu(settings: Settings) -> Optional[dict]:
             _menu_view_settings(settings)
 
         elif choice == "7":
+            result = _menu_chat(settings)
+            if result:
+                return result
+
+        elif choice == "8":
             _menu_help()
 
 
@@ -634,7 +640,49 @@ def _menu_view_settings(settings: Settings):
     _pause()
 
 
-# ── 7. Help ───────────────────────────────────────────────────────────────────
+# ── 7. Chat with codebase ────────────────────────────────────────────────────
+
+def _menu_chat(settings: Settings) -> Optional[dict]:
+    """Prompt for a codebase path and launch chat."""
+    _clear()
+    _header("Chat with Your Codebase")
+    _back_hint()
+
+    prov = settings.default_provider
+    if not settings.has_provider_configured(prov):
+        console.print(
+            f"[red]⚠  No API key configured for {PROVIDER_META.get(prov, {}).get('label', prov)}.[/red]"
+        )
+        console.print("[dim]Go to [bold]Setup[/bold] or [bold]Manage API Keys[/bold] first.[/dim]\n")
+        _pause()
+        return None
+
+    raw = Prompt.ask(
+        "Path to documented codebase", default="."
+    )
+    if _is_back(raw):
+        return None
+
+    target = os.path.abspath(raw)
+    if not os.path.isdir(target):
+        console.print(f"[red]Not a directory: {target}[/red]")
+        _pause()
+        return None
+
+    output_dir = os.path.join(target, "codilay")
+    codebase_md = os.path.join(output_dir, "CODEBASE.md")
+    if not os.path.exists(codebase_md):
+        console.print(
+            f"[red]No documentation found at {output_dir}[/red]\n"
+            f"[dim]Run [bold]codilay {target}[/bold] first to generate docs.[/dim]"
+        )
+        _pause()
+        return None
+
+    return {"action": "chat", "target": target}
+
+
+# ── 8. Help ───────────────────────────────────────────────────────────────────
 
 def _menu_help():
     """Show usage help."""
@@ -652,6 +700,9 @@ def _menu_help():
         "  [bold]codilay .[/bold]                        Document current directory\n"
         "  [bold]codilay /path/to/project[/bold]         Document a project\n"
         "  [bold]codilay . -p openai -m gpt-4o[/bold]    Override provider/model\n"
+        "  [bold]codilay chat .[/bold]                   Chat with your codebase\n"
+        "  [bold]codilay chat . --resume[/bold]          Resume last conversation\n"
+        "  [bold]codilay chat . --list[/bold]            List past conversations\n"
         "  [bold]codilay setup[/bold]                    Run setup wizard\n"
         "  [bold]codilay config[/bold]                   View settings\n"
         "  [bold]codilay keys[/bold]                     Manage API keys\n"
@@ -672,3 +723,4 @@ def _menu_help():
         title_align="left",
     ))
     _pause()
+

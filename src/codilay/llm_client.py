@@ -239,13 +239,15 @@ class LLMClient:
     # ── Public entry point ─────────────────────────────────────────
 
     def call(
-        self, system_prompt: str, user_prompt: str, retries: int = 3
+        self, system_prompt: str, user_prompt: str, retries: int = 3, json_mode: bool = True
     ) -> Dict[str, Any]:
         raw = ""
         for attempt in range(retries):
             try:
-                raw = self._raw_call_with_rate_limit(system_prompt, user_prompt)
+                raw = self._raw_call_with_rate_limit(system_prompt, user_prompt, json_mode=json_mode)
                 self.call_count += 1
+                if not json_mode:
+                    return {"answer": raw}
                 return self._parse_json(raw)
             except json.JSONDecodeError:
                 if attempt < retries - 1:
@@ -261,7 +263,7 @@ class LLMClient:
     # ── Rate-limit wrapper ─────────────────────────────────────────
 
     def _raw_call_with_rate_limit(
-        self, system_prompt: str, user_prompt: str
+        self, system_prompt: str, user_prompt: str, json_mode: bool = False
     ) -> str:
         """Call _raw_call with automatic retry on 429 rate-limit errors."""
         anthropic_err, openai_err = _get_rate_limit_errors()
@@ -269,7 +271,7 @@ class LLMClient:
 
         for rate_attempt in range(self.RATE_LIMIT_MAX_RETRIES):
             try:
-                return self._raw_call(system_prompt, user_prompt)
+                return self._raw_call(system_prompt, user_prompt, json_mode=json_mode)
             except rate_limit_errors as exc:
                 if rate_attempt >= self.RATE_LIMIT_MAX_RETRIES - 1:
                     raise
@@ -289,28 +291,31 @@ class LLMClient:
                 )
                 time.sleep(wait)
 
-        return self._raw_call(system_prompt, user_prompt)
+        return self._raw_call(system_prompt, user_prompt, json_mode=json_mode)
 
     # ── Raw API call (routes to correct SDK) ───────────────────────
 
-    def _raw_call(self, system_prompt: str, user_prompt: str) -> str:
+    def _raw_call(self, system_prompt: str, user_prompt: str, json_mode: bool = False) -> str:
         if self._sdk_type == "anthropic":
             return self._call_anthropic(system_prompt, user_prompt)
         else:
-            return self._call_openai(system_prompt, user_prompt)
+            return self._call_openai(system_prompt, user_prompt, json_mode=json_mode)
 
     def _call_anthropic(self, system_prompt: str, user_prompt: str) -> str:
+        # Anthropic doesn't have a specific 'json_mode' toggle like OpenAI, 
+        # it relies on the prompt.
         response = self.client.messages.create(
             model=self.model,
             max_tokens=self.max_tokens,
             system=system_prompt,
             messages=[{"role": "user", "content": user_prompt}],
+            timeout=60.0,
         )
         self.total_input_tokens += response.usage.input_tokens
         self.total_output_tokens += response.usage.output_tokens
         return response.content[0].text
 
-    def _call_openai(self, system_prompt: str, user_prompt: str) -> str:
+    def _call_openai(self, system_prompt: str, user_prompt: str, json_mode: bool = False) -> str:
         kwargs = {
             "model": self.model,
             "max_tokens": self.max_tokens,
@@ -318,20 +323,23 @@ class LLMClient:
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
             ],
+            "timeout": 60.0,
         }
 
-        # Try with JSON mode; fall back gracefully if unsupported
-        try:
-            response = self.client.chat.completions.create(
-                **kwargs,
-                response_format={"type": "json_object"},
-            )
-        except Exception as e:
-            err_msg = str(e).lower()
-            if "response_format" in err_msg or "json_object" in err_msg:
-                response = self.client.chat.completions.create(**kwargs)
-            else:
-                raise
+        if json_mode:
+            try:
+                response = self.client.chat.completions.create(
+                    **kwargs,
+                    response_format={"type": "json_object"},
+                )
+            except Exception as e:
+                err_msg = str(e).lower()
+                if "response_format" in err_msg or "json_object" in err_msg:
+                    response = self.client.chat.completions.create(**kwargs)
+                else:
+                    raise
+        else:
+            response = self.client.chat.completions.create(**kwargs)
 
         usage = response.usage
         if usage:

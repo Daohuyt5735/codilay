@@ -15,6 +15,7 @@ src/codilay/planner.py
 src/codilay/processor.py
 src/codilay/prompts.py
 src/codilay/scanner.py
+src/codilay/server.py
 src/codilay/settings.py
 src/codilay/state.py
 src/codilay/triage.py
@@ -26,3 +27,9 @@ src/codilay.egg-info/dependency_links.txt
 src/codilay.egg-info/entry_points.txt
 src/codilay.egg-info/requires.txt
 src/codilay.egg-info/top_level.txt
+src/codilay/web/index.html
+tests/test_config_state.py
+tests/test_docstore.py
+tests/test_planner.py
+tests/test_scanner.py
+tests/test_wire_manager.py

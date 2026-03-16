@@ -24,6 +24,9 @@ Requires-Dist: tiktoken>=0.7.0
 Requires-Dist: pathspec>=0.12.1
 Requires-Dist: click>=8.1.7
 Requires-Dist: rich>=13.9.0
+Provides-Extra: serve
+Requires-Dist: fastapi>=0.104.0; extra == "serve"
+Requires-Dist: uvicorn[standard]>=0.24.0; extra == "serve"
 Provides-Extra: dev
 Requires-Dist: pytest>=7.0; extra == "dev"
 Requires-Dist: ruff>=0.1.0; extra == "dev"

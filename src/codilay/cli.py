@@ -47,17 +47,21 @@ console = Console()
 
 
 def common_options(fn):
-    fn = click.option("--config", "-c", default=None, help="Path to codilay.config.json")(fn)
+    fn = click.option(
+        "--config", "-c", default=None, help="Path to codilay.config.json"
+    )(fn)
     fn = click.option("--output", "-o", default=None, help="Output directory")(fn)
     fn = click.option("--model", "-m", default=None, help="LLM model override")(fn)
     fn = click.option(
-        "--provider", "-p", default=None,
-        type=click.Choice(ALL_PROVIDERS), help="LLM provider",
+        "--provider",
+        "-p",
+        default=None,
+        type=click.Choice(ALL_PROVIDERS),
+        help="LLM provider",
     )(fn)
     fn = click.option("--base-url", default=None, help="Custom LLM API base URL")(fn)
     fn = click.option("--verbose", "-v", is_flag=True, help="Verbose output")(fn)
     return fn
-
 
 
 class CodiLayGroup(click.Group):
@@ -160,7 +164,7 @@ def run(ctx, target):
     # - If neither is given, config file values are used as-is.
     if provider is not None:
         if model_override is None and provider != cfg.llm_provider:
-            cfg.llm_model = None        # let provider default kick in
+            cfg.llm_model = None  # let provider default kick in
         cfg.llm_provider = provider
     if model_override:
         cfg.llm_model = model_override
@@ -242,9 +246,7 @@ def run(ctx, target):
     scanner = Scanner(target, cfg)
     wire_mgr = WireManager()
     docstore = DocStore()
-    state = existing_state or AgentState(
-        run_id=datetime.now(timezone.utc).isoformat()
-    )
+    state = existing_state or AgentState(run_id=datetime.now(timezone.utc).isoformat())
 
     # Load existing context if not starting from scratch
     if mode != "full":
@@ -294,36 +296,35 @@ def run(ctx, target):
         if cfg.force_include:
             force_matched = []
             for pattern in cfg.force_include:
-                force_matched.extend(
-                    triage._expand_pattern(pattern, all_files)
-                )
+                force_matched.extend(triage._expand_pattern(pattern, all_files))
             if force_matched:
                 triage_result.move_to_core(force_matched)
-                ui.info(
-                    f"Force-included {len(force_matched)} files from config"
-                )
+                ui.info(f"Force-included {len(force_matched)} files from config")
 
         if cfg.force_skip:
             force_matched = []
             for pattern in cfg.force_skip:
-                force_matched.extend(
-                    triage._expand_pattern(pattern, all_files)
-                )
+                force_matched.extend(triage._expand_pattern(pattern, all_files))
             if force_matched:
                 triage_result.move_to_skip(force_matched)
-                ui.info(
-                    f"Force-skipped {len(force_matched)} files from config"
-                )
+                ui.info(f"Force-skipped {len(force_matched)} files from config")
 
         # Handle test files
         if not cfg.include_tests:
             test_files = [
-                f for f in triage_result.core
+                f
+                for f in triage_result.core
                 if any(
                     p in f.lower()
                     for p in [
-                        "test", "spec", "__tests__", "_test.",
-                        ".test.", ".spec.", "test_", "tests/",
+                        "test",
+                        "spec",
+                        "__tests__",
+                        "_test.",
+                        ".test.",
+                        ".spec.",
+                        "test_",
+                        "tests/",
                     ]
                 )
             ]
@@ -427,9 +428,20 @@ def run(ctx, target):
         if not files_to_process:
             ui.success("All changes were structural. Doc updated!")
             _finalize_and_write(
-                state, wire_mgr, docstore, llm, cfg, ui,
-                scanner, target, output_dir, codebase_md_path,
-                state_path, git, current_commit, current_commit_short,
+                state,
+                wire_mgr,
+                docstore,
+                llm,
+                cfg,
+                ui,
+                scanner,
+                target,
+                output_dir,
+                codebase_md_path,
+                state_path,
+                git,
+                current_commit,
+                current_commit_short,
             )
             return
 
@@ -443,8 +455,7 @@ def run(ctx, target):
         files_to_process = changed
         wires_reopened = wire_mgr.reopen_wires_for_files(changed)
         ui.info(
-            f"Detected {len(changed)} changed files, "
-            f"re-opened {wires_reopened} wires"
+            f"Detected {len(changed)} changed files, re-opened {wires_reopened} wires"
         )
 
     elif mode == "specific":
@@ -467,7 +478,9 @@ def run(ctx, target):
 
         state.queue = plan["order"]
         state.parked = plan.get("parked", []) if mode == "full" else state.parked
-        state.park_reasons = plan.get("park_reasons", {}) if mode == "full" else state.park_reasons
+        state.park_reasons = (
+            plan.get("park_reasons", {}) if mode == "full" else state.park_reasons
+        )
         skeleton = plan["skeleton"]
 
         ui.show_plan(state.queue, state.parked, skeleton)
@@ -584,9 +597,20 @@ def run(ctx, target):
 
     # ── Phase 4: Finalize ────────────────────────────────────────
     _finalize_and_write(
-        state, wire_mgr, docstore, llm, cfg, ui,
-        scanner, target, output_dir, codebase_md_path,
-        state_path, git, current_commit, current_commit_short,
+        state,
+        wire_mgr,
+        docstore,
+        llm,
+        cfg,
+        ui,
+        scanner,
+        target,
+        output_dir,
+        codebase_md_path,
+        state_path,
+        git,
+        current_commit,
+        current_commit_short,
     )
 
     # Show LLM usage
@@ -599,9 +623,20 @@ def run(ctx, target):
 
 
 def _finalize_and_write(
-    state, wire_mgr, docstore, llm, cfg, ui,
-    scanner, target, output_dir, codebase_md_path,
-    state_path, git, current_commit, current_commit_short,
+    state,
+    wire_mgr,
+    docstore,
+    llm,
+    cfg,
+    ui,
+    scanner,
+    target,
+    output_dir,
+    codebase_md_path,
+    state_path,
+    git,
+    current_commit,
+    current_commit_short,
 ):
     """Finalize documentation, write all output files, save state."""
     from codilay.processor import Processor
@@ -611,7 +646,8 @@ def _finalize_and_write(
     processor = Processor(llm, cfg, wire_mgr, docstore, state, ui)
 
     with ui.spinner("Running finalization pass…"):
-        processor.finalize()
+        processor.finalize(scanner.get_file_tree())
+
 
     open_wires = wire_mgr.get_open_wires()
     closed_wires = wire_mgr.get_closed_wires()
@@ -677,6 +713,7 @@ def _finalize_and_write(
 
 
 # ─── Status command ───────────────────────────────────────────────────────────
+
 
 @cli.command()
 @click.argument("target", default=".", type=click.Path(exists=True))
@@ -755,12 +792,11 @@ def status(target):
                 f"[dim]({w['type']})[/dim]{ctx}"
             )
         if len(state.open_wires) > 15:
-            console.print(
-                f"  [dim]  … +{len(state.open_wires) - 15} more[/dim]"
-            )
+            console.print(f"  [dim]  … +{len(state.open_wires) - 15} more[/dim]")
 
 
 # ─── Diff command (new — show what would change) ─────────────────────────────
+
 
 @cli.command()
 @click.argument("target", default=".", type=click.Path(exists=True))
@@ -772,7 +808,9 @@ def diff(target):
 
     if not os.path.exists(state_path):
         console.print("[yellow]No previous CodiLay run found.[/yellow]")
-        console.print("[dim]Run [bold]codilay .[/bold] first to create documentation.[/dim]")
+        console.print(
+            "[dim]Run [bold]codilay .[/bold] first to create documentation.[/dim]"
+        )
         return
 
     state = AgentState.load(state_path)
@@ -783,7 +821,9 @@ def diff(target):
         return
 
     if not state.last_commit:
-        console.print("[yellow]No commit recorded in state. Run a full documentation pass first.[/yellow]")
+        console.print(
+            "[yellow]No commit recorded in state. Run a full documentation pass first.[/yellow]"
+        )
         return
 
     if not git.is_commit_valid(state.last_commit):
@@ -839,7 +879,8 @@ def diff(target):
             if was_processed:
                 # Count wires that would be affected
                 affected_wires = [
-                    w for w in state.closed_wires
+                    w
+                    for w in state.closed_wires
                     if w.get("from") == change.path
                     or w.get("to") == change.path
                     or w.get("resolved_in") == change.path
@@ -852,10 +893,11 @@ def diff(target):
             status_str = "[red]deleted[/red]"
             if was_processed:
                 affected_wires = [
-                    w for w in state.closed_wires
-                    if w.get("resolved_in") == change.path
+                    w for w in state.closed_wires if w.get("resolved_in") == change.path
                 ]
-                impact_parts.append(f"section marked deleted, {len(affected_wires)} wires re-opened")
+                impact_parts.append(
+                    f"section marked deleted, {len(affected_wires)} wires re-opened"
+                )
             else:
                 impact_parts.append("was not documented")
 
@@ -883,9 +925,7 @@ def diff(target):
         f"  [bold]{len(diff_result.files_to_process)}[/bold] files to process, "
         f"[bold]{len(diff_result.deleted)}[/bold] deletions to handle"
     )
-    console.print(
-        "\n[dim]Run [bold]codilay .[/bold] to update documentation.[/dim]"
-    )
+    console.print("\n[dim]Run [bold]codilay .[/bold] to update documentation.[/dim]")
 
     # Show commits
     if diff_result.commit_messages:
@@ -898,6 +938,7 @@ def diff(target):
 
 
 # ─── Clean command ────────────────────────────────────────────────────────────
+
 
 @cli.command()
 @click.argument("target", default=".", type=click.Path(exists=True))
@@ -940,6 +981,7 @@ def clean(target, yes):
 
 # ─── Init command ─────────────────────────────────────────────────────────────
 
+
 @cli.command()
 @click.argument("target", default=".", type=click.Path(exists=True))
 def init(target):
@@ -978,6 +1020,7 @@ def init(target):
 
 # ─── Interactive menu ─────────────────────────────────────────────────────────
 
+
 @cli.command(hidden=True)
 @click.pass_context
 def interactive(ctx):
@@ -997,8 +1040,13 @@ def interactive(ctx):
         ctx.obj["verbose"] = result.get("verbose", settings.verbose)
         ctx.invoke(run, target=result["target"])
 
+    elif result and result.get("action") == "chat":
+        settings.inject_env_vars()
+        ctx.invoke(chat, target=result["target"])
+
 
 # ─── Setup wizard ─────────────────────────────────────────────────────────────
+
 
 @cli.command()
 @click.pass_context
@@ -1012,6 +1060,7 @@ def setup(ctx):
 
 # ─── Config viewer ────────────────────────────────────────────────────────────
 
+
 @cli.command("config")
 @click.pass_context
 def show_config(ctx):
@@ -1024,6 +1073,7 @@ def show_config(ctx):
 
 # ─── Key management ──────────────────────────────────────────────────────────
 
+
 @cli.command()
 @click.pass_context
 def keys(ctx):
@@ -1032,3 +1082,596 @@ def keys(ctx):
 
     settings: Settings = ctx.obj["settings"]
     _menu_api_keys(settings)
+
+
+# ─── Serve command (Web UI) ──────────────────────────────────────────────────
+
+
+@cli.command()
+@click.argument("target", default=".", type=click.Path(exists=True))
+@click.option("--port", "-P", default=8484, help="Port to serve on")
+@click.option("--host", "-H", default="127.0.0.1", help="Host to bind to")
+@click.option(
+    "--output", "-o", default=None, help="Output directory containing codilay files"
+)
+def serve(target, port, host, output):
+    """Launch the CodiLay web UI for browsing documentation.
+
+    \b
+    Examples:
+        codilay serve .                  Serve current project on port 8484
+        codilay serve /path/to/project   Serve a specific project
+        codilay serve . --port 9000      Custom port
+    """
+    target = os.path.abspath(target)
+    output_dir = output or os.path.join(target, "codilay")
+
+    # Quick validation
+    codebase_md = os.path.join(output_dir, "CODEBASE.md")
+    if not os.path.exists(codebase_md):
+        console.print(
+            f"[red]No documentation found at {output_dir}[/red]\n"
+            f"[dim]Run [bold]codilay {target}[/bold] first to generate docs.[/dim]"
+        )
+        return
+
+    try:
+        from codilay.server import run_server
+    except ImportError as e:
+        console.print(
+            f"[red]Missing dependencies for web UI: {e}[/red]\n"
+            f"[dim]Install with: [bold]pip install codilay[serve][/bold][/dim]"
+        )
+        return
+
+    console.print(
+        Panel(
+            f"[bold]CodiLay Web UI[/bold]\n\n"
+            f"  Project:  [cyan]{os.path.basename(target)}[/cyan]\n"
+            f"  URL:      [bold green]http://{host}:{port}[/bold green]\n\n"
+            f"[dim]Press Ctrl+C to stop.[/dim]",
+            border_style="blue",
+            title="serve",
+        )
+    )
+
+    run_server(target, output_dir, host=host, port=port)
+
+
+# ── Chat command ──────────────────────────────────────────────────────────────
+
+
+@cli.command()
+@click.argument("target", default=".", type=click.Path(exists=True))
+@click.option("--resume", "-r", is_flag=True, help="Resume last conversation")
+@click.option("--list", "-l", "list_convs", is_flag=True, help="List past conversations")
+@click.option("--conversation", "-c", default=None, help="Resume a specific conversation by ID")
+@click.option(
+    "--output", "-o", default=None, help="Output directory containing codilay files"
+)
+@click.pass_context
+def chat(ctx, target, resume, list_convs, conversation, output):
+    """Start an interactive chat about your codebase.
+
+    \\b
+    Examples:
+        codilay chat .                    Start new chat
+        codilay chat . --resume           Resume last conversation
+        codilay chat . --list             List past conversations
+        codilay chat . -c CONV_ID         Resume specific conversation
+    """
+    target = os.path.abspath(target)
+    output_dir = output or os.path.join(target, "codilay")
+
+    # Validate docs exist
+    codebase_md = os.path.join(output_dir, "CODEBASE.md")
+    if not os.path.exists(codebase_md):
+        console.print(
+            f"[red]No documentation found at {output_dir}[/red]\n"
+            f"[dim]Run [bold]codilay {target}[/bold] first to generate docs.[/dim]"
+        )
+        return
+
+    from codilay.chatstore import ChatStore, make_message
+    from codilay.retriever import Retriever
+
+    chat_store = ChatStore(output_dir)
+
+    # ── List mode ─────────────────────────────────────────────────
+    if list_convs:
+        convs = chat_store.list_conversations()
+        if not convs:
+            console.print("[dim]No past conversations.[/dim]")
+            return
+        table = Table(title="Past Conversations", box=box.ROUNDED, border_style="blue")
+        table.add_column("ID", style="dim", max_width=12)
+        table.add_column("Title", style="cyan")
+        table.add_column("Messages", justify="right")
+        table.add_column("Last Active", style="dim")
+        for c in convs:
+            table.add_row(
+                c["id"][:8] + "…",
+                c.get("title", "Untitled"),
+                str(c.get("message_count", 0)),
+                c.get("updated_at", "?")[:16],
+            )
+        console.print(table)
+        return
+
+    # ── Load agent state + retriever ──────────────────────────────
+    state_path = os.path.join(output_dir, ".codilay_state.json")
+    if not os.path.exists(state_path):
+        alt = os.path.join(output_dir, ".codylay_state.json")
+        if os.path.exists(alt):
+            state_path = alt
+    state = AgentState.load(state_path)
+    retriever = Retriever(state.section_index, state.section_contents)
+
+    # ── LLM setup ─────────────────────────────────────────────────
+    settings = ctx.obj["settings"]
+    settings.inject_env_vars()
+    cfg = CodiLayConfig(target_path=target)
+    cfg.llm_provider = ctx.obj["provider"] or settings.default_provider
+    cfg.llm_model = ctx.obj.get("model") or settings.default_model
+    base_url = ctx.obj.get("base_url") or settings.custom_base_url
+    if base_url:
+        cfg.llm_base_url = base_url
+
+    llm = LLMClient(cfg)
+
+    # ── Resolve or create conversation ────────────────────────────
+    conv_id = None
+    if conversation:
+        conv = chat_store.get_conversation(conversation)
+        if conv is None:
+            console.print(f"[red]Conversation {conversation} not found.[/red]")
+            return
+        conv_id = conv["id"]
+        console.print(f"[dim]Resuming: {conv.get('title', 'Untitled')}[/dim]")
+    elif resume:
+        convs = chat_store.list_conversations()
+        if convs:
+            conv_id = convs[0]["id"]
+            console.print(f"[dim]Resuming: {convs[0].get('title', 'Untitled')}[/dim]")
+        else:
+            console.print("[dim]No previous conversations. Starting fresh.[/dim]")
+
+    if conv_id is None:
+        conv = chat_store.create_conversation()
+        conv_id = conv["id"]
+
+    # ── Memory context ────────────────────────────────────────────
+    memory_ctx = chat_store.build_memory_context()
+
+    # ── Header ────────────────────────────────────────────────────
+    mem = chat_store.load_memory()
+    facts_count = len(mem.get("facts", []))
+    prefs_count = len(mem.get("preferences", {}))
+
+    console.print(
+        Panel(
+            f"[bold]CodiLay Chat[/bold] · [cyan]{os.path.basename(target)}[/cyan]\n"
+            f"Memory: [yellow]{facts_count} facts[/yellow] · "
+            f"[yellow]{prefs_count} preferences[/yellow]\n"
+            f"[dim]Type /help for commands · /quit to exit[/dim]",
+            border_style="blue",
+            title="chat",
+        )
+    )
+
+    force_deep = False
+    last_msg_id = None
+
+    # ── Chat loop ─────────────────────────────────────────────────
+    while True:
+        try:
+            user_input = console.input("\n[bold green]You:[/bold green] ").strip()
+        except (EOFError, KeyboardInterrupt):
+            console.print("\n[dim]Goodbye![/dim]")
+            break
+
+        if not user_input:
+            continue
+
+        # ── Handle slash commands ─────────────────────────────────
+        if user_input.startswith("/"):
+            cmd_parts = user_input[1:].split(None, 1)
+            cmd = cmd_parts[0].lower()
+            cmd_arg = cmd_parts[1] if len(cmd_parts) > 1 else ""
+
+            if cmd in ("quit", "exit", "q"):
+                # Extract memory before leaving
+                try:
+                    n = chat_store.extract_and_store_memory(conv_id, llm)
+                    if n > 0:
+                        console.print(f"[dim]💾 Saved {n} facts to memory.[/dim]")
+                except Exception:
+                    pass
+                console.print("[dim]Goodbye![/dim]")
+                break
+
+            elif cmd == "help":
+                _chat_help(console)
+                continue
+
+            elif cmd == "pin":
+                msg_idx = cmd_arg or "last"
+                if msg_idx == "last" and last_msg_id:
+                    chat_store.pin_message(conv_id, last_msg_id, True)
+                    console.print("[green]✓ Pinned — this answer will persist across chats[/green]")
+                else:
+                    console.print("[dim]No message to pin. Chat first![/dim]")
+                continue
+
+            elif cmd == "unpin":
+                if last_msg_id:
+                    chat_store.pin_message(conv_id, last_msg_id, False)
+                    console.print("[green]✓ Unpinned[/green]")
+                continue
+
+            elif cmd == "promote":
+                if last_msg_id:
+                    console.print("[dim]Promoting to documentation...[/dim]")
+                    try:
+                        from codilay.docstore import DocStore
+                        docstore = DocStore()
+                        docstore.load_from_state(state.section_index, state.section_contents)
+                        section_id = chat_store.promote_to_doc(
+                            conv_id, last_msg_id, docstore, llm
+                        )
+                        if section_id:
+                            # Re-render CODEBASE.md
+                            final_md = docstore.render_full_document()
+                            with open(codebase_md, "w", encoding="utf-8") as f:
+                                f.write(final_md)
+                            console.print(
+                                f'[green]✓ Promoted to doc section "[cyan]{section_id}[/cyan]"[/green]'
+                            )
+                        else:
+                            console.print("[red]Could not promote (LLM error).[/red]")
+                    except Exception as e:
+                        console.print(f"[red]Promotion failed: {e}[/red]")
+                else:
+                    console.print("[dim]No message to promote.[/dim]")
+                continue
+
+            elif cmd == "export":
+                md = chat_store.export_markdown(conv_id)
+                if md:
+                    export_dir = os.path.join(output_dir, "chat", "exports")
+                    os.makedirs(export_dir, exist_ok=True)
+                    conv = chat_store.get_conversation(conv_id)
+                    title = conv.get("title", "chat") if conv else "chat"
+                    from codilay.chatstore import _slugify
+                    fname = f"{_slugify(title)}.md"
+                    fpath = os.path.join(export_dir, fname)
+                    with open(fpath, "w", encoding="utf-8") as f:
+                        f.write(md)
+                    console.print(f"[green]✓ Exported to {fpath}[/green]")
+                continue
+
+            elif cmd == "branch":
+                if last_msg_id:
+                    branch = chat_store.branch_conversation(conv_id, last_msg_id)
+                    if branch:
+                        conv_id = branch["id"]
+                        console.print(
+                            f"[green]✓ Branched! Now in conversation {conv_id[:8]}…[/green]"
+                        )
+                    else:
+                        console.print("[red]Could not branch.[/red]")
+                continue
+
+            elif cmd == "memory":
+                if cmd_arg == "clear":
+                    chat_store.clear_memory()
+                    memory_ctx = ""
+                    console.print("[green]✓ Memory cleared.[/green]")
+                else:
+                    _show_memory(console, chat_store.load_memory())
+                continue
+
+            elif cmd == "deep":
+                force_deep = True
+                console.print("[dim]Next answer will read source files directly.[/dim]")
+                continue
+
+            elif cmd == "history":
+                convs = chat_store.list_conversations()
+                if not convs:
+                    console.print("[dim]No past conversations.[/dim]")
+                else:
+                    for c in convs[:10]:
+                        console.print(
+                            f"  [dim]{c['id'][:8]}…[/dim] "
+                            f"[cyan]{c.get('title', 'Untitled')}[/cyan] "
+                            f"[dim]({c.get('message_count', 0)} msgs)[/dim]"
+                        )
+                continue
+
+            elif cmd == "resume":
+                if cmd_arg:
+                    # Try to match partial ID
+                    convs = chat_store.list_conversations()
+                    match = None
+                    for c in convs:
+                        if c["id"].startswith(cmd_arg):
+                            match = c
+                            break
+                    if match:
+                        conv_id = match["id"]
+                        console.print(
+                            f"[green]✓ Resumed: {match.get('title', 'Untitled')}[/green]"
+                        )
+                    else:
+                        console.print(f"[red]No conversation matching '{cmd_arg}'[/red]")
+                else:
+                    console.print("[dim]Usage: /resume <id_prefix>[/dim]")
+                continue
+
+            elif cmd == "new":
+                # Extract memory from current conversation
+                try:
+                    n = chat_store.extract_and_store_memory(conv_id, llm)
+                    if n > 0:
+                        console.print(f"[dim]💾 Saved {n} facts from previous chat.[/dim]")
+                except Exception:
+                    pass
+                conv = chat_store.create_conversation()
+                conv_id = conv["id"]
+                memory_ctx = chat_store.build_memory_context()
+                console.print("[green]✓ Started new conversation.[/green]")
+                continue
+
+            else:
+                console.print(f"[dim]Unknown command: /{cmd}. Type /help for commands.[/dim]")
+                continue
+
+        # ── Normal question flow ──────────────────────────────────
+        user_msg = make_message("user", user_input)
+        chat_store.add_message(conv_id, user_msg)
+
+        # ── Check if we should go deep immediately ────────────────
+        def _should_escalate_by_keyword(question: str) -> bool:
+            q = question.lower()
+            deep_patterns = [
+                "show me the code", "show the code", "exactly how", "line by line",
+                "implementation detail", "source code", "what does the code",
+                "read the file", "look at the file", "open the file",
+                "specific implementation", "actual code"
+            ]
+            return any(p in q for p in deep_patterns)
+
+        force_deep = force_deep or _should_escalate_by_keyword(user_input)
+
+        # Retrieve relevant sections
+        relevant = retriever.search(user_input, top_k=5)
+
+        # Build pinned context
+        pinned_msgs = chat_store.get_pinned_messages(conv_id)
+        pinned_ctx = ""
+        if pinned_msgs:
+            pinned_ctx = "\n\n".join(
+                f"- {m['content'][:200]}" for m in pinned_msgs[:5]
+            )
+
+        # Build conversation history
+        chat_context = chat_store.build_chat_context(conv_id, max_messages=10)
+        history_text = ""
+        if len(chat_context) > 1:
+            history_lines = []
+            for cm in chat_context[:-1]:
+                role = cm["role"].capitalize()
+                content = cm["content"][:300]
+                history_lines.append(f"{role}: {content}")
+            history_text = "\n".join(history_lines[-6:])
+
+        # Should we go deep?
+        should_deep = force_deep
+        force_deep = False  # Reset after use
+
+        answer = ""
+        sources = []
+        escalated = False
+
+        if not should_deep:
+            if relevant:
+                # Build doc context
+                from codilay.prompts import chat_system_prompt, chat_user_prompt
+
+                context_parts = [sec.formatted for sec in relevant]
+                doc_context = "\n\n---\n\n".join(context_parts)
+
+                system = chat_system_prompt(
+                    memory_context=memory_ctx,
+                    pinned_context=pinned_ctx,
+                )
+                user = chat_user_prompt(
+                    question=user_input,
+                    doc_context=doc_context,
+                    conversation_history=history_text,
+                )
+
+                try:
+                    with console.status("[dim]Thinking...[/dim]"):
+                        raw_text = llm._raw_call_with_rate_limit(system, user, json_mode=False)
+
+                    # Parse confidence
+                    confidence = 0.5
+                    lines = raw_text.strip().split("\n")
+                    answer_lines = []
+                    for line in lines:
+                        if line.strip().startswith("CONFIDENCE:"):
+                            try:
+                                confidence = float(line.strip().split("CONFIDENCE:")[1].strip())
+                            except (ValueError, IndexError):
+                                pass
+                        else:
+                            answer_lines.append(line)
+
+                    answer = "\n".join(answer_lines).strip()
+                    sources = [sec.section_id for sec in relevant]
+
+                    if not answer or confidence < 0.7:
+                        should_deep = True
+                        reason = "Doc context insufficient" if answer else "No clear answer from docs"
+                        console.print(
+                            f"[dim]{reason} — escalating to deep agent...[/dim]"
+                        )
+                except Exception as e:
+                    console.print(f"[red]Error: {e}[/red]")
+                    should_deep = True # Fallback to deep agent if Doc search fails
+            else:
+                should_deep = True
+                console.print("[dim]No relevant documentation found — searching source code...[/dim]")
+
+        if should_deep:
+            # Deep agent — reads actual source files
+            escalated = True
+            file_candidates = set(retriever.get_source_files(user_input, top_k=5))
+            for sec in relevant:
+                if sec.file:
+                    file_candidates.add(sec.file)
+
+            file_contents = {}
+            for fpath in list(file_candidates)[:5]:
+                full = os.path.join(target, fpath)
+                if os.path.exists(full) and os.path.isfile(full):
+                    try:
+                        with open(full, "r", encoding="utf-8", errors="replace") as fh:
+                            content = fh.read()
+                        if len(content) > 15000:
+                            content = content[:15000] + "\n\n... [truncated]"
+                        file_contents[fpath] = content
+                    except Exception:
+                        pass
+
+            if file_contents:
+                source_parts = []
+                for fpath, content in file_contents.items():
+                    source_parts.append(f"### File: {fpath}\n```\n{content}\n```")
+                source_context = "\n\n".join(source_parts)
+
+                doc_ctx = ""
+                if relevant:
+                    doc_parts = [sec.formatted for sec in relevant[:3]]
+                    doc_ctx = (
+                        "Documentation context:\n\n"
+                        + "\n---\n".join(doc_parts)
+                        + "\n\n---\n\n"
+                    )
+
+                system = (
+                    "You are a deep codebase analysis agent. You have access to actual "
+                    "source code files. Answer the user's question with precision, "
+                    "referencing specific functions, classes, line ranges, and logic. "
+                    "Be thorough but concise. Use markdown formatting.\n"
+                    "IMPORTANT: Respond with PLAIN TEXT markdown only. Do NOT wrap your "
+                    "entire response in a JSON object or any other format."
+                )
+                user_prompt = (
+                    f"{doc_ctx}{history_text}\n\n"
+                    f"Source code:\n\n{source_context}\n\n---\n\n"
+                    f"Question: {user_input}"
+                )
+
+                try:
+                    with console.status("[dim]Reading source files...[/dim]"):
+                        answer = llm._raw_call_with_rate_limit(system, user_prompt)
+                    answer = answer.strip()
+                    sources = list(file_contents.keys())
+                except Exception as e:
+                    console.print(f"[red]Deep analysis failed: {e}[/red]")
+                    continue
+            else:
+                answer = (
+                    "I couldn't find relevant source files. "
+                    "Try mentioning specific file or module names."
+                )
+
+        # ── Display answer ────────────────────────────────────────
+        console.print()
+        console.print(
+            Panel(
+                answer,
+                title="[bold blue]CodiLay[/bold blue]"
+                + (" [yellow]🔍 deep[/yellow]" if escalated else ""),
+                border_style="blue",
+                padding=(1, 2),
+            )
+        )
+        if sources:
+            src_text = ", ".join(str(s) for s in sources[:5])
+            console.print(f"[dim]Sources: {src_text}[/dim]")
+
+        # ── Persist assistant message ─────────────────────────────
+        asst_msg = make_message(
+            "assistant",
+            answer,
+            sources=sources,
+            escalated=escalated,
+        )
+        chat_store.add_message(conv_id, asst_msg)
+        last_msg_id = asst_msg["id"]
+
+        # Track topic
+        if relevant:
+            chat_store.track_topic(relevant[0].title)
+
+
+def _chat_help(console):
+    """Display chat command help."""
+    console.print(
+        Panel(
+            "[bold]Chat Commands[/bold]\n\n"
+            "  [cyan]/help[/cyan]          Show this help\n"
+            "  [cyan]/pin[/cyan]           Pin the last answer (persists across chats)\n"
+            "  [cyan]/unpin[/cyan]         Unpin the last answer\n"
+            "  [cyan]/promote[/cyan]       Promote last answer to CODEBASE.md\n"
+            "  [cyan]/export[/cyan]        Export conversation to markdown\n"
+            "  [cyan]/branch[/cyan]        Branch conversation from last message\n"
+            "  [cyan]/deep[/cyan]          Force next answer from source code\n"
+            "  [cyan]/memory[/cyan]        View stored memory facts\n"
+            "  [cyan]/memory clear[/cyan]  Clear all memory\n"
+            "  [cyan]/history[/cyan]       List past conversations\n"
+            "  [cyan]/resume ID[/cyan]     Resume a past conversation\n"
+            "  [cyan]/new[/cyan]           Start a fresh conversation\n"
+            "  [cyan]/quit[/cyan]          Exit chat",
+            border_style="blue",
+            title="help",
+        )
+    )
+
+
+def _show_memory(console, memory):
+    """Display cross-session memory."""
+    facts = memory.get("facts", [])
+    prefs = memory.get("preferences", {})
+    topics = memory.get("frequent_topics", {})
+
+    if not facts and not prefs and not topics:
+        console.print("[dim]Memory is empty.[/dim]")
+        return
+
+    lines = []
+    if facts:
+        lines.append("[bold]Facts:[/bold]")
+        for f in facts:
+            cat = f.get("category", "general")
+            lines.append(f"  [{cat}] {f['fact']}")
+
+    if prefs:
+        lines.append("\n[bold]Preferences:[/bold]")
+        for k, v in prefs.items():
+            lines.append(f"  {k}: {v}")
+
+    if topics:
+        sorted_topics = sorted(topics.items(), key=lambda x: x[1], reverse=True)
+        lines.append("\n[bold]Frequent Topics:[/bold]")
+        for t, c in sorted_topics[:10]:
+            lines.append(f"  {t} ({c}×)")
+
+    console.print(
+        Panel("\n".join(lines), border_style="yellow", title="memory")
+    )
+
