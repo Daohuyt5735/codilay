@@ -116,8 +116,15 @@ class ParallelOrchestrator:
         self.ui = ui
         self.max_workers = max_workers
 
+        # Ensure progress callback is always present
+        self._progress_callback = None
+
         # Thread-safe docstore lock
         self._docstore_lock = threading.RLock()
+
+        # Initialize progress tracking attributes
+        self._completed_count = 0
+        self._total_files = 0
 
         # Park management
         self._park_entries: Dict[str, ParkEntry] = {}
