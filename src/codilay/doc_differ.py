@@ -56,6 +56,8 @@ class DocDiffResult:
     sections_delta: int = 0
     old_run_time: Optional[str] = None
     new_run_time: Optional[str] = None
+    old_commit_msg: Optional[str] = None
+    new_commit_msg: Optional[str] = None
 
     @property
     def has_changes(self) -> bool:
@@ -96,6 +98,8 @@ class DocDiffResult:
             },
             "old_run_time": self.old_run_time,
             "new_run_time": self.new_run_time,
+            "old_commit_msg": self.old_commit_msg,
+            "new_commit_msg": self.new_commit_msg,
         }
 
 
@@ -280,6 +284,7 @@ class DocVersionStore:
         open_wires: List[Dict],
         run_id: str = "",
         commit: str = "",
+        commit_msg: str = "",
     ) -> str:
         """
         Save a snapshot of the current documentation state.
@@ -290,6 +295,7 @@ class DocVersionStore:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "run_id": run_id,
             "commit": commit,
+            "commit_msg": commit_msg,
             "section_index": section_index,
             "section_contents": section_contents,
             "closed_wires": closed_wires,
@@ -326,6 +332,7 @@ class DocVersionStore:
                         "timestamp": data.get("timestamp", ""),
                         "run_id": data.get("run_id", ""),
                         "commit": data.get("commit", ""),
+                        "commit_msg": data.get("commit_msg", ""),
                         "sections": len(data.get("section_index", {})),
                     }
                 )
@@ -364,8 +371,15 @@ class DocVersionStore:
         if len(snapshots) < 2:
             return None
 
-        new_snap = self.load_snapshot(snapshots[0]["filename"])
-        old_snap = self.load_snapshot(snapshots[1]["filename"])
+        return self.diff_snapshots(snapshots[1]["filename"], snapshots[0]["filename"])
+
+    def diff_snapshots(self, snap1: str, snap2: str) -> Optional[DocDiffResult]:
+        """
+        Diff two specific snapshots.
+        snap1 (old) -> snap2 (new)
+        """
+        old_snap = self.load_snapshot(snap1)
+        new_snap = self.load_snapshot(snap2)
 
         if not new_snap or not old_snap:
             return None
@@ -384,6 +398,8 @@ class DocVersionStore:
         result = differ.diff()
         result.old_run_time = old_snap.get("timestamp")
         result.new_run_time = new_snap.get("timestamp")
+        result.old_commit_msg = old_snap.get("commit_msg")
+        result.new_commit_msg = new_snap.get("commit_msg")
 
         return result
 

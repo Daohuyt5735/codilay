@@ -2253,9 +2253,28 @@
         const sel1 = document.getElementById('diff-snap1');
         const sel2 = document.getElementById('diff-snap2');
         diffSnapshots.forEach((s, i) => {
-          const label = s.replace(/\.json$/, '');
-          sel1.innerHTML += `<option value="${escHtml(s)}" ${i === diffSnapshots.length - 2 ? 'selected' : ''}>${escHtml(label)}</option>`;
-          sel2.innerHTML += `<option value="${escHtml(s)}" ${i === diffSnapshots.length - 1 ? 'selected' : ''}>${escHtml(label)}</option>`;
+          // Format label: Date + Commit Short + Commit Msg
+          let dateStr = '';
+          const fnameParts = s.filename.replace('snapshot_', '').replace('.json', '').split('_');
+          if (fnameParts.length >= 2) {
+            const date = fnameParts[0];
+            const time = fnameParts[1];
+            dateStr = `${date.slice(0, 4)}-${date.slice(4, 6)}-${date.slice(6, 8)} ${time.slice(0, 2)}:${time.slice(2, 4)}`;
+          }
+          
+          let commitInfo = '';
+          if (s.commit) {
+            commitInfo = ` (${s.commit.slice(0, 7)})`;
+            if (s.commit_msg) {
+              const msg = s.commit_msg.length > 40 ? s.commit_msg.slice(0, 37) + '...' : s.commit_msg;
+              commitInfo += ` ${msg}`;
+            }
+          }
+          
+          const label = `${dateStr}${commitInfo}` || s.filename;
+          
+          sel1.innerHTML += `<option value="${escHtml(s.filename)}" ${i === diffSnapshots.length - 2 ? 'selected' : ''}>${escHtml(label)}</option>`;
+          sel2.innerHTML += `<option value="${escHtml(s.filename)}" ${i === diffSnapshots.length - 1 ? 'selected' : ''}>${escHtml(label)}</option>`;
         });
 
         // Auto-load latest diff
@@ -2275,8 +2294,15 @@
       const resultsEl = document.getElementById('diff-results');
       resultsEl.innerHTML = '<div class="loading" style="color:var(--text-muted);">Computing diff...</div>';
 
+      const s1 = document.getElementById('diff-snap1')?.value;
+      const s2 = document.getElementById('diff-snap2')?.value;
+      let url = '/api/doc-diff';
+      if (s1 && s2) {
+        url += `?snap1=${encodeURIComponent(s1)}&snap2=${encodeURIComponent(s2)}`;
+      }
+
       try {
-        const res = await fetch('/api/doc-diff');
+        const res = await fetch(url);
         if (!res.ok) throw new Error('Diff computation failed');
         const data = await res.json();
 
@@ -2293,11 +2319,17 @@
 
         let html = '';
 
-        // Time range
+        // Time range & Commit info
         if (data.old_run_time || data.new_run_time) {
-          html += `<div style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">
-            ${data.old_run_time || '?'} &rarr; ${data.new_run_time || '?'}
-          </div>`;
+          html += `<div style="font-size:12px;color:var(--text-muted);margin-bottom:16px;line-height:1.5;">`;
+          html += `<div>${data.old_run_time || '?'} &rarr; ${data.new_run_time || '?'}</div>`;
+          if (data.old_commit_msg || data.new_commit_msg) {
+            html += `<div style="margin-top:4px;">
+              <span style="opacity:0.6;">From:</span> ${escHtml(data.old_commit_msg || 'n/a')}<br/>
+              <span style="opacity:0.6;">To:</span> &nbsp;&nbsp;&nbsp;${escHtml(data.new_commit_msg || 'n/a')}
+            </div>`;
+          }
+          html += `</div>`;
         }
 
         // Stats delta

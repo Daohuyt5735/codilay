@@ -129,6 +129,10 @@ class GitTracker:
         """Get short HEAD hash."""
         return self._run_git("rev-parse", "--short", "HEAD")
 
+    def get_commit_message(self, commit_hash: str) -> Optional[str]:
+        """Get the subject line of a commit message."""
+        return self._run_git("log", "-1", "--format=%s", commit_hash)
+
     def is_commit_valid(self, commit_hash: str) -> bool:
         """Check if a commit hash exists in the repo."""
         result = self._run_git("cat-file", "-t", commit_hash, check=False)

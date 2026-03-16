@@ -787,18 +787,21 @@ def create_app(
     # ── Feature 4: Doc diff ───────────────────────────────────────
 
     @app.get("/api/doc-diff")
-    async def get_doc_diff():
-        """Get documentation changes between the last two runs."""
+    async def get_doc_diff(snap1: Optional[str] = None, snap2: Optional[str] = None):
+        """Get documentation changes between runs."""
         try:
             from codilay.doc_differ import DocVersionStore
 
             store = DocVersionStore(output_dir)
-            snapshots = store.list_snapshots()
 
-            if len(snapshots) < 2:
-                return {"has_changes": False, "message": "Need at least 2 snapshots", "snapshots": len(snapshots)}
+            if snap1 and snap2:
+                result = store.diff_snapshots(snap1, snap2)
+            else:
+                snapshots = store.list_snapshots()
+                if len(snapshots) < 2:
+                    return {"has_changes": False, "message": "Need at least 2 snapshots", "snapshots": len(snapshots)}
+                result = store.diff_latest()
 
-            result = store.diff_latest()
             if result is None:
                 raise HTTPException(status_code=500, detail="Could not compute diff")
 

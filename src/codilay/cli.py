@@ -914,6 +914,10 @@ def _finalize_and_write(
         from codilay.doc_differ import DocVersionStore
 
         version_store = DocVersionStore(os.path.dirname(codebase_md_path))
+        commit_msg = ""
+        if git and current_commit:
+            commit_msg = git.get_commit_message(current_commit) or ""
+
         version_store.save_snapshot(
             section_index=state.section_index,
             section_contents=state.section_contents,
@@ -921,6 +925,7 @@ def _finalize_and_write(
             open_wires=open_wires,
             run_id=state.run_id,
             commit=current_commit or "",
+            commit_msg=commit_msg,
         )
     except Exception:
         pass  # Non-critical — don't block the run
