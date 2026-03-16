@@ -180,11 +180,23 @@ class ParallelOrchestrator:
         self._stats["max_parallelism"] = graph_stats["max_parallelism"]
 
         # Phase 3: Process tiers
-        completed_count = 0
-        total = len(files_to_process)
+        self._completed_count = 0
+        self._total_files = len(files_to_process)
+        self._progress_callback = progress_callback
         tier_results: List[TierResult] = []
 
         for tier_idx, tier_files in enumerate(tiers):
+            # Identify missing files in this tier
+            missing = [f for f in tier_files if f not in file_contents]
+            for f in missing:
+                self._on_file_processed(
+                    WorkerResult(
+                        file_path=f,
+                        success=False,
+                        error="File content not loaded (skipped)",
+                    )
+                )
+
             # Filter to files that still need processing
             tier_files = [f for f in tier_files if f in file_contents]
 
@@ -208,12 +220,6 @@ class ParallelOrchestrator:
 
             tier_results.append(tier_result)
 
-            # Progress tracking
-            for wr in tier_result.results:
-                completed_count += 1
-                if progress_callback:
-                    progress_callback(wr.file_path, completed_count, total)
-
             # ── Tier boundary sync ───────────────────────────────
             self._sync_tier_boundary(tier_idx)
 
@@ -232,10 +238,8 @@ class ParallelOrchestrator:
             self.ui.info(f"  Processing {len(unparked_files)} unparked files...")
             for file_path in unparked_files:
                 if file_path in file_contents:
-                    self._process_single_file(file_path, file_contents[file_path], "sequential")
-                    completed_count += 1
-                    if progress_callback:
-                        progress_callback(file_path, completed_count, total)
+                    wr = self._process_single_file(file_path, file_contents[file_path], "sequential")
+                    self._on_file_processed(wr)
 
         self._stats["total_time"] = time.time() - start_time
 
@@ -265,6 +269,7 @@ class ParallelOrchestrator:
             wr = self._process_single_file(file_path, content, "sequential")
             result.results.append(wr)
             self._stats["sequential_files"] += 1
+            self._on_file_processed(wr)
 
         result.total_time = time.time() - tier_start
         return result
@@ -315,15 +320,16 @@ class ParallelOrchestrator:
                     wr = future.result()
                     result.results.append(wr)
                     self._stats["parallel_files"] += 1
+                    self._on_file_processed(wr)
                 except Exception as e:
-                    result.results.append(
-                        WorkerResult(
-                            file_path=file_path,
-                            success=False,
-                            error=str(e),
-                        )
+                    wr = WorkerResult(
+                        file_path=file_path,
+                        success=False,
+                        error=str(e),
                     )
+                    result.results.append(wr)
                     self.ui.warn(f"  Worker error for {file_path}: {e}")
+                    self._on_file_processed(wr)
 
         # Mark all tier files as completed
         for f in files:
@@ -331,6 +337,12 @@ class ParallelOrchestrator:
 
         result.total_time = time.time() - tier_start
         return result
+
+    def _on_file_processed(self, wr: WorkerResult):
+        """Internal helper to update progress in real-time."""
+        self._completed_count += 1
+        if self._progress_callback:
+            self._progress_callback(wr.file_path, self._completed_count, self._total_files)
 
     # ── Worker function (runs in thread) ─────────────────────────
 
