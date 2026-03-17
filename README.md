@@ -16,8 +16,21 @@ CodiLay is not just a static documentation generator; it's an **agentic document
 
 ### 1. Installation
 
+**Install from PyPI (Recommended)**
 ```bash
-# Clone and install
+# Basic installation
+pip install codilay
+
+# Install with all features (Web UI + Watch mode)
+pip install "codilay[all]"
+
+# For a global CLI installation (recommended)
+pipx install codilay
+```
+
+**Install from Source**
+```bash
+# Clone the repository
 git clone https://github.com/HarmanPreet-Singh-XYT/codilay.git
 cd codilay
 
