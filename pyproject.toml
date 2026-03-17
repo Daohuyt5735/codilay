@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "codilay"
-version = "0.1.1"
+version = "0.1.2"
 description = "AI Agent for Codebase Documentation"
 readme = "README.md"
 license = {text = "MIT"}
@@ -49,10 +49,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/HarmanPreet-Singh-XYT/codilay"
+Homepage = "https://codilay.harmanita.com/"
 Repository = "https://github.com/HarmanPreet-Singh-XYT/codilay"
 Issues = "https://github.com/HarmanPreet-Singh-XYT/codilay/issues"
-Documentation = "https://github.com/HarmanPreet-Singh-XYT/codilay#readme"
+Documentation = "https://codilay.harmanita.com/docs"
 
 # THIS IS THE KEY PART — registers the `codilay` command
 [project.scripts]
