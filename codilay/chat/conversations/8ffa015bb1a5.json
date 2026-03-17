@@ -1,0 +1,38 @@
+{
+  "id": "8ffa015bb1a5",
+  "title": "Parallel Orchestrator purpose",
+  "created_at": "2026-03-17T05:31:31.119717+00:00",
+  "updated_at": "2026-03-17T05:31:34.754561+00:00",
+  "messages": [
+    {
+      "id": "10accc799a7b",
+      "role": "user",
+      "content": "Parallel Orchestrator purpose",
+      "sources": [],
+      "confidence": null,
+      "escalated": false,
+      "pinned": false,
+      "parent_id": null,
+      "created_at": "2026-03-17T05:31:31.120731+00:00"
+    },
+    {
+      "id": "519a7cc60dbf",
+      "role": "assistant",
+      "content": "The purpose of the `ParallelOrchestrator` in the `src/codilay/parallel_orchestrator.py` file is to coordinate parallel file processing based on dependency tiers using a thread-based approach. Its main function is to efficiently generate documentation for a codebase while maintaining data integrity through robust synchronization and locking mechanisms. Key aspects include:\n1. **Dependency Graph Construction**: Builds a graph of file dependencies using static import analysis.\n2. **Tiers Calculation**: Sorts files into execution tiers to ensure no intra-tier dependencies exist.\n3. **Tier Execution**: Processes files in parallel within a tier using worker threads, manages results with `DocStore`, and ensures thread safety through locks.\n4. **Handling Parked Files**: Manages files with unresolved dependencies in a parked state until they can be processed.\n5. **Finalization**: Ensures consistency and completeness of documentation after parallel processing.\nThe `ParallelOrchestrator` is essential for scalable and efficient documentation generation by leveraging parallel processing while ensuring synchronized updates across threads.",
+      "sources": [
+        "unresolved-references",
+        "parallel-orchestrator",
+        "license",
+        "codilay-server",
+        "setup-py"
+      ],
+      "confidence": 0.9,
+      "escalated": false,
+      "pinned": false,
+      "parent_id": null,
+      "created_at": "2026-03-17T05:31:34.754066+00:00"
+    }
+  ],
+  "parent_conv_id": null,
+  "branch_point_msg_id": null
+}

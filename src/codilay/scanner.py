@@ -159,51 +159,47 @@ class Scanner:
 
     def _build_ignore_spec(self):
         patterns = [
-            ".git/",
-            ".git/**",
-            "node_modules/",
-            "node_modules/**",
-            "__pycache__/",
-            "__pycache__/**",
-            ".codilay_state.json",
-            "codilay/",
-            "codilay/**",
-            "output/",
-            "output/**",
-            ".venv/",
-            ".venv/**",
-            "venv/",
-            "venv/**",
-            ".env/",
-            ".env/**",
-            "env/",
-            "env/**",
-            "build/",
-            "build/**",
-            "dist/",
-            "dist/**",
-            ".dart_tool/",
-            ".dart_tool/**",
-            ".gradle/",
-            ".gradle/**",
-            "Pods/",
-            "Pods/**",
-            ".idea/",
-            ".idea/**",
-            ".vscode/",
-            ".vscode/**",
-            ".vs/",
-            ".vs/**",
-            "target/",
-            "target/**",
-            "out/",
-            "out/**",
-            ".cache/",
-            ".cache/**",
-            ".next/",
-            ".next/**",
-            "coverage/",
-            "coverage/**",
+            "/.git/",
+            "/.git/**",
+            "/node_modules/",
+            "/node_modules/**",
+            "/__pycache__/",
+            "/__pycache__/**",
+            "/.codilay_state.json",
+            "/.venv/",
+            "/.venv/**",
+            "/venv/",
+            "/venv/**",
+            "/.env/",
+            "/.env/**",
+            "/env/",
+            "/env/**",
+            "/build/",
+            "/build/**",
+            "/dist/",
+            "/dist/**",
+            "/.dart_tool/",
+            "/.dart_tool/**",
+            "/.gradle/",
+            "/.gradle/**",
+            "/Pods/",
+            "/Pods/**",
+            "/.idea/",
+            "/.idea/**",
+            "/.vscode/",
+            "/.vscode/**",
+            "/.vs/",
+            "/.vs/**",
+            "/target/",
+            "/target/**",
+            "/out/",
+            "/out/**",
+            "/.cache/",
+            "/.cache/**",
+            "/.next/",
+            "/.next/**",
+            "/coverage/",
+            "/coverage/**",
         ]
 
         gitignore_path = os.path.join(self.target_path, ".gitignore")
@@ -222,8 +218,9 @@ class Scanner:
                 rel_output = os.path.relpath(self.output_dir, self.target_path)
                 if not rel_output.startswith("..") and rel_output != ".":
                     rel_output = rel_output.replace(os.sep, "/")
-                    patterns.append(f"{rel_output}/")
-                    patterns.append(f"{rel_output}/**")
+                    # Prefix with / to make it root-relative
+                    patterns.append(f"/{rel_output}/")
+                    patterns.append(f"/{rel_output}/**")
             except ValueError:
                 pass
 
@@ -263,7 +260,7 @@ class Scanner:
             # - Untracked NOT-ignored files
             # - Nested .gitignore files correctly
             result = subprocess.run(
-                ["git", "ls-files", "--cached", "--others", "--exclude-standard"],
+                ["git", "ls-files", "--cached", "--others", "--exclude-standard", "--", "."],
                 cwd=self.target_path,
                 capture_output=True,
                 text=True,
