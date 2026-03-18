@@ -18,6 +18,7 @@ from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from codilay.chatstore import ChatStore, make_message
@@ -118,6 +119,11 @@ def create_app(
             return True
 
     # ── Layer 1: Reader endpoints ─────────────────────────────────
+
+    # Static files (CSS, JS) from the web directory
+    web_dir = os.path.join(os.path.dirname(__file__), "web")
+    if os.path.exists(web_dir):
+        app.mount("/static", StaticFiles(directory=web_dir), name="static")
 
     @app.get("/", response_class=HTMLResponse)
     async def index():

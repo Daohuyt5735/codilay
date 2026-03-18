@@ -62,7 +62,7 @@ codilay = "codilay.cli:cli"
 where = ["src"]
 
 [tool.setuptools.package-data]
-codilay = ["web/*.html"]
+codilay = ["web/*"]
 
 [tool.ruff]
 line-length = 120
