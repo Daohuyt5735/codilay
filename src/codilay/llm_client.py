@@ -341,7 +341,7 @@ class LLMClient:
     def _parse_json(self, text: str) -> Dict[str, Any]:
         # Handle markdown fences that might not be at the very start/end
         text = text.strip()
-        
+
         # More robust fence stripping
         if "```json" in text:
             start = text.find("```json") + 7
@@ -361,7 +361,7 @@ class LLMClient:
             if "Extra data" in str(e):
                 try:
                     parsed = json.loads(text[:e.pos].strip())
-                except:
+                except Exception:
                     raise e
             else:
                 raise e
@@ -378,9 +378,9 @@ class LLMClient:
         start = text.find("{")
         if start == -1:
             return {"error": "Failed to parse LLM response (no start brace)", "raw_response": text[:1000]}
-            
+
         end = text.rfind("}")
-        
+
         # Strategy 1: Classic substring or take all if no end brace
         if end != -1 and end > start:
             candidates = [text[start : end + 1], text[start:]]
@@ -399,9 +399,9 @@ class LLMClient:
                         parsed = json.loads(candidate[:e.pos].strip())
                         if isinstance(parsed, dict):
                             return parsed
-                    except:
+                    except Exception:
                         pass
-                
+
                 # Strategy 3: Truncated JSON repair
                 for suffix in ["}", "\"", "\"}", "\"}]}", "\"}}", "}}", "]}", "]}"] :
                     try:
@@ -409,7 +409,7 @@ class LLMClient:
                         if isinstance(parsed, dict):
                             parsed["_repaired"] = True
                             return parsed
-                    except:
+                    except Exception:
                         continue
 
         return {"error": "Failed to parse LLM response", "raw_response": text[:1000]}
