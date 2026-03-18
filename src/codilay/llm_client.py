@@ -339,15 +339,33 @@ class LLMClient:
     # ── JSON parsing ───────────────────────────────────────────────
 
     def _parse_json(self, text: str) -> Dict[str, Any]:
+        # Handle markdown fences that might not be at the very start/end
         text = text.strip()
-        if text.startswith("```json"):
-            text = text[7:]
-        elif text.startswith("```"):
-            text = text[3:]
-        if text.endswith("```"):
-            text = text[:-3]
+        
+        # More robust fence stripping
+        if "```json" in text:
+            start = text.find("```json") + 7
+            end = text.rfind("```")
+            if end > start:
+                text = text[start:end]
+        elif "```" in text:
+            start = text.find("```") + 3
+            end = text.rfind("```")
+            if end > start:
+                text = text[start:end]
 
-        parsed = json.loads(text.strip())
+        text = text.strip()
+        try:
+            parsed = json.loads(text)
+        except json.JSONDecodeError as e:
+            if "Extra data" in str(e):
+                try:
+                    parsed = json.loads(text[:e.pos].strip())
+                except:
+                    raise e
+            else:
+                raise e
+
         if isinstance(parsed, dict):
             return parsed
         elif isinstance(parsed, list):
@@ -358,17 +376,43 @@ class LLMClient:
     def _salvage_json(self, text: str) -> Dict[str, Any]:
         text = text.strip()
         start = text.find("{")
+        if start == -1:
+            return {"error": "Failed to parse LLM response (no start brace)", "raw_response": text[:1000]}
+            
         end = text.rfind("}")
-        if start != -1 and end != -1 and end > start:
+        
+        # Strategy 1: Classic substring or take all if no end brace
+        if end != -1 and end > start:
+            candidates = [text[start : end + 1], text[start:]]
+        else:
+            candidates = [text[start:]]
+
+        for candidate in candidates:
             try:
-                parsed = json.loads(text[start : end + 1])
+                parsed = json.loads(candidate)
                 if isinstance(parsed, dict):
                     return parsed
-                elif isinstance(parsed, list):
-                    return {"error": "LLM returned a list instead of an object (salvaged)", "raw_list": parsed}
-            except json.JSONDecodeError:
-                pass
-        return {"error": "Failed to parse LLM response", "raw_response": text[:500]}
+            except json.JSONDecodeError as e:
+                # Strategy 2: Handle extra data after valid object
+                if "Extra data" in str(e):
+                    try:
+                        parsed = json.loads(candidate[:e.pos].strip())
+                        if isinstance(parsed, dict):
+                            return parsed
+                    except:
+                        pass
+                
+                # Strategy 3: Truncated JSON repair
+                for suffix in ["}", "\"", "\"}", "\"}]}", "\"}}", "}}", "]}", "]}"] :
+                    try:
+                        parsed = json.loads(candidate + suffix)
+                        if isinstance(parsed, dict):
+                            parsed["_repaired"] = True
+                            return parsed
+                    except:
+                        continue
+
+        return {"error": "Failed to parse LLM response", "raw_response": text[:1000]}
 
     def get_usage_stats(self) -> Dict[str, int]:
         return {

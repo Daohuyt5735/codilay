@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "codilay"
-version = "0.1.3"
+version = "0.1.4"
 description = "AI Agent for Codebase Documentation & Auditing"
 readme = "README.md"
 license = {text = "MIT"}

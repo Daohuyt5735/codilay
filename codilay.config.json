@@ -8,7 +8,7 @@
   "entryHint": "",
   "llm": {
     "model": "claude-sonnet-4-20250514",
-    "maxTokensPerCall": 8192
+    "maxTokensPerCall": 16384
   },
   "triage": {
     "mode": "smart",
@@ -17,8 +17,8 @@
     "forceSkip": []
   },
   "chunking": {
-    "tokenThreshold": 6000,
-    "maxChunkTokens": 4000,
-    "overlapRatio": 0.10
+    "tokenThreshold": 4000,
+    "maxChunkTokens": 3000,
+    "overlapRatio": 0.15
   }
 }
