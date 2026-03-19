@@ -90,3 +90,6 @@ Ruff is configured in `pyproject.toml` with rules E, F, I, W. Line length is 120
 ## Package Entry Point
 
 `codilay = "codilay.cli:cli"` — installed via `pip install -e .`, invoked as `codilay [subcommand | path]`.
+
+
+Do not try to take shortcuts like skipping tests or not following the architecture. Always follow the architecture and the tests. or maybe writing to bypass tests.

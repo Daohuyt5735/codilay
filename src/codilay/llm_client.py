@@ -9,6 +9,8 @@ from typing import Any, Dict
 
 import tiktoken
 
+from codilay.pricing import estimate_cost
+
 # ── Provider registry ─────────────────────────────────────────────────────────
 # "sdk" is "anthropic" (native SDK) or "openai" (OpenAI SDK / compatible).
 
@@ -91,6 +93,8 @@ ALL_PROVIDERS = list(PROVIDER_CONFIGS.keys())
 
 _anthropic_rate_limit_error = None
 _openai_rate_limit_error = None
+_anthropic_auth_error = None
+_openai_auth_error = None
 
 
 def _get_rate_limit_errors():
@@ -111,6 +115,30 @@ def _get_rate_limit_errors():
         except ImportError:
             _openai_rate_limit_error = type(None)
     return _anthropic_rate_limit_error, _openai_rate_limit_error
+
+
+def _get_auth_errors():
+    """Import provider-specific authentication error classes once."""
+    global _anthropic_auth_error, _openai_auth_error
+    if _anthropic_auth_error is None:
+        try:
+            import anthropic
+
+            _anthropic_auth_error = anthropic.AuthenticationError
+        except (ImportError, AttributeError):
+            _anthropic_auth_error = type(None)
+    if _openai_auth_error is None:
+        try:
+            import openai
+
+            _openai_auth_error = openai.AuthenticationError
+        except (ImportError, AttributeError):
+            _openai_auth_error = type(None)
+    return _anthropic_auth_error, _openai_auth_error
+
+
+class AuthenticationError(Exception):
+    """Raised when the API key is invalid or expired — user must fix it."""
 
 
 def _extract_retry_after(exc) -> float:
@@ -264,13 +292,24 @@ class LLMClient:
     def _raw_call_with_rate_limit(
         self, system_prompt: str, user_prompt: str, json_mode: bool = False, use_thinking: bool = False
     ) -> str:
-        """Call _raw_call with automatic retry on 429 rate-limit errors."""
-        anthropic_err, openai_err = _get_rate_limit_errors()
-        rate_limit_errors = (anthropic_err, openai_err)
+        """Call _raw_call with automatic retry on 429 rate-limit errors.
+
+        Auth errors (401) are converted to AuthenticationError immediately —
+        they are not transient and must be fixed by the user.
+        """
+        anthropic_rl, openai_rl = _get_rate_limit_errors()
+        anthropic_auth, openai_auth = _get_auth_errors()
+        rate_limit_errors = (anthropic_rl, openai_rl)
+        auth_errors = (anthropic_auth, openai_auth)
 
         for rate_attempt in range(self.RATE_LIMIT_MAX_RETRIES):
             try:
                 return self._raw_call(system_prompt, user_prompt, json_mode=json_mode, use_thinking=use_thinking)
+            except auth_errors as exc:
+                # Auth errors are not retryable — surface them immediately
+                raise AuthenticationError(
+                    f"API authentication failed: {exc}\nCheck your API key (codilay keys set) and try again."
+                ) from exc
             except rate_limit_errors as exc:
                 if rate_attempt >= self.RATE_LIMIT_MAX_RETRIES - 1:
                     raise
@@ -462,9 +501,11 @@ class LLMClient:
 
         return {"error": "Failed to parse LLM response", "raw_response": text[:1000]}
 
-    def get_usage_stats(self) -> Dict[str, int]:
+    def get_usage_stats(self) -> Dict[str, Any]:
+        cost = estimate_cost(self.model, self.total_input_tokens, self.total_output_tokens)
         return {
             "total_input_tokens": self.total_input_tokens,
             "total_output_tokens": self.total_output_tokens,
             "total_calls": self.call_count,
+            "estimated_cost_usd": cost,
         }

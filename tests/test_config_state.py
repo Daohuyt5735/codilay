@@ -2,6 +2,8 @@ import json
 import os
 import tempfile
 
+import pytest
+
 from codilay.config import CodiLayConfig
 from codilay.settings import Settings
 from codilay.state import AgentState
@@ -183,3 +185,79 @@ def test_settings_max_workers_bounds():
 
     settings.max_workers = 16
     assert settings.max_workers == 16
+
+
+# ── State backup rotation ────────────────────────────────────────────────────
+
+
+def test_state_save_creates_backup_on_second_save():
+    """Saving twice should leave a .bak.1 alongside the primary."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        path = os.path.join(tmpdir, "state.json")
+        state = AgentState(run_id="first")
+        state.save(path)
+
+        state2 = AgentState(run_id="second")
+        state2.save(path)
+
+        assert os.path.exists(path)
+        assert os.path.exists(f"{path}.bak.1")
+
+        # Primary should hold the second save
+        loaded = AgentState.load(path)
+        assert loaded.run_id == "second"
+
+        # .bak.1 should hold the first save
+        bak = AgentState.load(f"{path}.bak.1")
+        assert bak.run_id == "first"
+
+
+def test_state_save_rotates_up_to_three_backups():
+    """After four saves, .bak.1/.bak.2/.bak.3 should all exist."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        path = os.path.join(tmpdir, "state.json")
+        for i in range(4):
+            AgentState(run_id=f"run-{i}").save(path)
+
+        assert os.path.exists(f"{path}.bak.1")
+        assert os.path.exists(f"{path}.bak.2")
+        assert os.path.exists(f"{path}.bak.3")
+
+
+def test_state_load_falls_back_to_bak1_on_corrupt_primary():
+    """If primary state.json is corrupt JSON, load() should recover from .bak.1."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        path = os.path.join(tmpdir, "state.json")
+
+        # Write a valid state so .bak.1 is created
+        AgentState(run_id="good").save(path)
+        AgentState(run_id="good").save(path)  # triggers rotation → bak.1 = first save
+
+        # Corrupt the primary
+        with open(path, "w") as f:
+            f.write("{broken json")
+
+        loaded = AgentState.load(path)
+        assert loaded.run_id == "good"
+
+
+def test_state_load_raises_when_all_backups_corrupt():
+    """FileNotFoundError when primary and all backups are corrupt."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        path = os.path.join(tmpdir, "state.json")
+
+        # Write corrupt primary and .bak.1
+        for suffix in ["", ".bak.1"]:
+            with open(path + suffix, "w") as f:
+                f.write("not json")
+
+        with pytest.raises(FileNotFoundError):
+            AgentState.load(path)
+
+
+def test_state_load_raises_when_no_file():
+    """FileNotFoundError when state file doesn't exist at all."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        path = os.path.join(tmpdir, "nonexistent.json")
+        with pytest.raises(FileNotFoundError):
+            AgentState.load(path)

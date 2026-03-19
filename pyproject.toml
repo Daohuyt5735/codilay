@@ -81,7 +81,7 @@ exclude = [
 [tool.ruff.lint]
 select = ["E", "F", "I", "W"]
 ignore = ["F401", "F841", "F541"]
-per-file-ignores = { "__init__.py" = ["F401"], "src/codilay/prompts.py" = ["E501"], "src/codilay/server.py" = ["E501"], "src/codilay/menu.py" = ["E501"] }
+per-file-ignores = { "__init__.py" = ["F401"], "src/codilay/prompts.py" = ["E501"], "src/codilay/server.py" = ["E501"], "src/codilay/menu.py" = ["E501"], "src/codilay/cli.py" = ["E501"] }
 
 [tool.ruff.format]
 quote-style = "double"

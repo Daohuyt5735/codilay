@@ -9,6 +9,9 @@ from rich.panel import Panel
 from rich.prompt import Prompt
 from rich.table import Table
 
+from codilay.error_tracker import ErrorTracker, Severity
+from codilay.pricing import format_cost
+
 
 class UI:
     def __init__(self, console: Console, verbose: bool = False):
@@ -192,22 +195,38 @@ class UI:
         choice = Prompt.ask("Choice", choices=["1", "2", "3", "q"], default="1")
         return {"1": "git_update", "2": "specific", "3": "full", "q": "quit"}.get(choice, "quit")
 
-    def prompt_interrupted_run(self, state) -> str:
-        """Prompt user when an interrupted run is detected."""
+    def prompt_interrupted_run(self, state, cost_so_far: float = 0.0) -> str:
+        """Prompt user when an interrupted run is detected.
+
+        Shows what was saved, the cost spent, and options to resume vs re-run.
+        """
         self.console.print()
 
         processed = len(state.processed)
         remaining = len(state.queue)
         total = processed + remaining
+        parked = len(state.parked)
+
+        cost_line = ""
+        if cost_so_far > 0:
+            cost_line = f"  • Spent so far:  [yellow]{format_cost(cost_so_far)}[/yellow]\n"
+
+        failed_line = ""
+        if parked:
+            failed_line = f"  • Parked files: [yellow]{parked}[/yellow] (will retry with context)\n"
 
         panel_text = (
-            f"[bold]CodiLay detected an interrupted run.[/bold]\n\n"
-            f"  • Processed: [green]{processed}[/green] files\n"
-            f"  • Remaining: [yellow]{remaining}[/yellow] files\n"
-            f"  • Total planned: {total} files\n\n"
+            f"[bold]CodiLay detected an incomplete run.[/bold]\n\n"
+            f"  • Processed:    [green]{processed}[/green] files saved\n"
+            f"  • Remaining:    [yellow]{remaining}[/yellow] files to go\n"
+            f"  • Total planned: {total} files\n"
+            f"{failed_line}"
+            f"{cost_line}\n"
+            f"Resuming will pick up where the run stopped — no re-processing of\n"
+            f"already-documented files and [bold]no extra cost[/bold] for those.\n\n"
             "What would you like to do?\n\n"
-            "  [cyan][1][/cyan] Resume where you left off\n"
-            "  [cyan][2][/cyan] Start fresh (full re-run)\n"
+            "  [cyan][1][/cyan] Resume from checkpoint  [dim](recommended)[/dim]\n"
+            "  [cyan][2][/cyan] Full re-run from scratch\n"
             "  [cyan][q][/cyan] Quit"
         )
 
@@ -215,7 +234,7 @@ class UI:
             Panel(
                 panel_text,
                 border_style="orange3",
-                title="[bold orange3]Interrupted Run Found[/bold orange3]",
+                title="[bold orange3]Incomplete Run Found[/bold orange3]",
             )
         )
 
@@ -302,6 +321,8 @@ class UI:
         sections: int,
         output_path: str,
         links_path: str,
+        error_tracker: "ErrorTracker | None" = None,
+        cost_usd: float = 0.0,
     ):
         self.console.print()
 
@@ -319,13 +340,109 @@ class UI:
             "Wires open (unresolved)",
             f"[yellow]{wires_open}[/yellow]" if wires_open else "[green]0[/green]",
         )
+        if cost_usd > 0:
+            table.add_row("Estimated cost", format_cost(cost_usd))
         table.add_row("Output", output_path)
         table.add_row("Links", links_path)
 
         self.console.print(table)
         self.console.print()
         self.console.print(f"  [bold green]✓[/bold green] Documentation written to [bold]{output_path}[/bold]")
+
+        # One-line error/warning summary beneath the table
+        if error_tracker is not None:
+            counts = error_tracker.counts()
+            warnings = counts.get(Severity.WARNING, 0)
+            skipped = counts.get(Severity.SKIPPED, 0)
+            errors = counts.get(Severity.CRITICAL, 0)
+
+            parts = []
+            if errors:
+                parts.append(f"[red]{errors} error{'s' if errors != 1 else ''}[/red]")
+            if warnings:
+                parts.append(f"[yellow]{warnings} warning{'s' if warnings != 1 else ''}[/yellow]")
+            if skipped:
+                parts.append(f"[dim]{skipped} skipped[/dim]")
+
+            if parts:
+                summary_line = "  " + "  ".join(parts)
+                if error_tracker.has_issues():
+                    summary_line += "  [dim]— run `codilay status` for details[/dim]"
+                self.console.print(summary_line)
+
         self.console.print()
+
+    def show_next_steps(self, output_path: str, target: str):
+        """Show actionable next-step commands after a successful run."""
+        self.console.print()
+        self.console.print(
+            Panel(
+                "  [bold cyan][1][/bold cyan]  Browse docs      [dim]codilay serve .[/dim]\n"
+                "  [bold cyan][2][/bold cyan]  Chat with code   [dim]codilay chat .[/dim]\n"
+                "  [bold cyan][3][/bold cyan]  Export for AI    [dim]codilay export . --format compact[/dim]\n"
+                "  [bold cyan][4][/bold cyan]  Auto-update      [dim]codilay watch .[/dim]\n"
+                "  [bold cyan][5][/bold cyan]  Keep up to date  [dim]codilay schedule set . '0 2 * * *'[/dim]\n"
+                f"  [bold cyan][6][/bold cyan]  Commit docs      [dim]git add codilay/CODEBASE.md && git commit[/dim]",
+                title="[bold]What's next?[/bold]",
+                border_style="green",
+                padding=(0, 2),
+            )
+        )
+
+    def show_error_panel(self, error_tracker: "ErrorTracker"):
+        """Display a persistent error/warning panel if the run had any issues."""
+        if error_tracker.is_empty():
+            return
+
+        counts = error_tracker.counts()
+        errors = counts.get(Severity.CRITICAL, 0)
+        warnings = counts.get(Severity.WARNING, 0)
+        skipped = counts.get(Severity.SKIPPED, 0)
+
+        if not errors and not warnings and not skipped:
+            return
+
+        self.console.print()
+
+        # Build the panel body
+        lines = []
+        for entry in error_tracker.entries:
+            if entry.severity == Severity.CRITICAL:
+                badge = "[bold red]CRITICAL[/bold red]"
+            elif entry.severity == Severity.WARNING:
+                badge = "[bold yellow]WARNING[/bold yellow]"
+            elif entry.severity == Severity.SKIPPED:
+                badge = "[bold dim]SKIPPED[/bold dim]"
+            else:
+                badge = "[dim]INFO[/dim]"
+
+            file_part = f" [dim]{entry.file}[/dim]" if entry.file else ""
+            lines.append(f"  {badge}{file_part}")
+            lines.append(f"    What:   {entry.what}")
+            if entry.why:
+                lines.append(f"    Why:    [dim]{entry.why}[/dim]")
+            if entry.action:
+                lines.append(f"    Action: [cyan]{entry.action}[/cyan]")
+            lines.append("")
+
+        border = "red" if errors else "yellow"
+        title_parts = []
+        if errors:
+            title_parts.append(f"[red]{errors} error{'s' if errors != 1 else ''}[/red]")
+        if warnings:
+            title_parts.append(f"[yellow]{warnings} warning{'s' if warnings != 1 else ''}[/yellow]")
+        if skipped:
+            title_parts.append(f"[dim]{skipped} skipped[/dim]")
+        title = "  ".join(title_parts)
+
+        self.console.print(
+            Panel(
+                "\n".join(lines).rstrip(),
+                title=f"[bold]Run Issues — {title}[/bold]",
+                border_style=border,
+                padding=(0, 1),
+            )
+        )
         # ── Triage display methods ───────────────────────────────────
 
     def show_triage_result(self, triage_result, project_type: str):

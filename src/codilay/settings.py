@@ -178,6 +178,8 @@ class Settings:
     reasoning_apply_to: List[str] = field(default_factory=lambda: ["processing", "planning"])
 
     # Code annotation settings
+    annotate_model: Optional[str] = None  # dedicated model for annotate (overrides config file model)
+    annotate_use_config_model: bool = False  # if True, project codilay.config.json model applies to annotate
     annotate_require_git_clean: bool = True
     annotate_require_dry_run_first: bool = True
     annotate_auto_commit: bool = False

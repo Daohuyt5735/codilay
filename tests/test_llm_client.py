@@ -197,3 +197,96 @@ def test_llm_client_salvage_json(mock_config):
         # Test salvage failure
         res = client._salvage_json("no json here")
         assert "error" in res
+
+
+# ── AuthenticationError ───────────────────────────────────────────────────────
+
+
+@patch("anthropic.Anthropic")
+def test_llm_client_anthropic_auth_error_raises(mock_anthropic, mock_config):
+    """An Anthropic AuthenticationError should be re-raised as codilay.llm_client.AuthenticationError."""
+    import anthropic as anthropic_lib
+
+    from codilay.llm_client import AuthenticationError
+
+    mock_config.llm_provider = "anthropic"
+    os.environ["ANTHROPIC_API_KEY"] = "bad-key"
+    client = LLMClient(mock_config)
+
+    mock_response = MagicMock()
+    mock_response.request = MagicMock()
+    mock_anthropic.return_value.messages.create.side_effect = anthropic_lib.AuthenticationError(
+        message="invalid api key",
+        response=mock_response,
+        body=None,
+    )
+
+    with pytest.raises(AuthenticationError):
+        client.call("sys", "user")
+
+
+@patch("openai.OpenAI")
+def test_llm_client_openai_auth_error_raises(mock_openai, mock_config):
+    """An OpenAI AuthenticationError should be re-raised as codilay.llm_client.AuthenticationError."""
+    import openai as openai_lib
+
+    from codilay.llm_client import AuthenticationError
+
+    os.environ["OPENAI_API_KEY"] = "bad-key"
+    client = LLMClient(mock_config)
+
+    mock_openai.return_value.chat.completions.create.side_effect = openai_lib.AuthenticationError(
+        message="invalid api key",
+        response=MagicMock(status_code=401, headers={}),
+        body=None,
+    )
+
+    with pytest.raises(AuthenticationError):
+        client.call("sys", "user")
+
+
+# ── get_usage_stats includes cost ─────────────────────────────────────────────
+
+
+@patch("openai.OpenAI")
+def test_get_usage_stats_includes_estimated_cost(mock_openai, mock_config):
+    """get_usage_stats() must include estimated_cost_usd when model is known."""
+    os.environ["OPENAI_API_KEY"] = "test-key"
+    client = LLMClient(mock_config)
+
+    mock_response = MagicMock()
+    mock_response.choices = [MagicMock()]
+    mock_response.choices[0].message.content = '{"ok": true}'
+    mock_response.usage.prompt_tokens = 1_000_000
+    mock_response.usage.completion_tokens = 1_000_000
+    mock_openai.return_value.chat.completions.create.return_value = mock_response
+
+    client.call("sys", "user")
+    stats = client.get_usage_stats()
+
+    assert "estimated_cost_usd" in stats
+    # gpt-4o: $2.5/M input + $10/M output = $12.50
+    assert abs(stats["estimated_cost_usd"] - 12.50) < 0.01
+
+
+@patch("anthropic.Anthropic")
+def test_get_usage_stats_cost_zero_for_unknown_model(mock_anthropic, mock_config):
+    """estimated_cost_usd should be 0.0 for models not in the pricing table."""
+    mock_config.llm_provider = "anthropic"
+    mock_config.llm_model = "my-custom-local-model"
+    os.environ["ANTHROPIC_API_KEY"] = "test-key"
+    client = LLMClient(mock_config)
+
+    text_block = MagicMock()
+    text_block.type = "text"
+    text_block.text = '{"ok": true}'
+    mock_response = MagicMock()
+    mock_response.content = [text_block]
+    mock_response.usage.input_tokens = 500
+    mock_response.usage.output_tokens = 200
+    mock_anthropic.return_value.messages.create.return_value = mock_response
+
+    client.call("sys", "user")
+    stats = client.get_usage_stats()
+
+    assert stats["estimated_cost_usd"] == 0.0

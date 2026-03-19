@@ -71,6 +71,7 @@ Why use flags when you can have a full-blown dashboard in your terminal?
 - **Live Monitoring**: Track active scans and resource usage.
 - **Audit Console**: Launch security and architecture scans from a central menu.
 - **History Browser**: View past conversations and export logs.
+- **Smart Resume Detection**: When choosing "Document a codebase", CodiLay peeks at the existing state file and shows an incomplete-run banner with file counts before you confirm — so you know you're resuming, not starting fresh.
 
 ### 🧠 The Wire Model
 CodiLay treats every import, function call, and variable reference as a **Wire**. 
@@ -394,6 +395,43 @@ def process_payment(order_id, retry_count=0):
 - Per-file syntax validation (Python `ast.parse`) before any write
 - Automatic backup to `codilay/annotation_history/` for rollback without git
 
+### 🔒 Resilience & Recovery
+
+CodiLay is designed to survive interruptions without losing money or progress.
+
+**State backups** — after every file processed, the state file is saved atomically. Three rolling backups (`.bak.1`, `.bak.2`, `.bak.3`) are kept alongside it. If the primary state is corrupt on the next startup, CodiLay automatically falls back to the most recent valid backup.
+
+**Resume from any interruption** — whether Ctrl+C, a crash, or an API auth failure, the run can always be resumed from the last checkpoint. The interactive menu previews how many files were saved and how many remain before you confirm:
+
+```
+┌─ Incomplete Run Found ─────────────────────────────────────┐
+│  • Processed:    48 files saved                            │
+│  • Remaining:    25 files to go                            │
+│  • Total planned: 73 files                                 │
+│                                                            │
+│  Resuming costs nothing for already-documented files.      │
+└────────────────────────────────────────────────────────────┘
+```
+
+**Concurrent run prevention** — a lock file prevents two `codilay` processes from running on the same project simultaneously. Stale locks from crashed runs are cleaned up automatically via PID validation.
+
+**Cost estimation before processing** — after planning, CodiLay prints a rough cost estimate before spending any tokens:
+```
+ℹ  Estimated cost for 73 files: $0.33  (rough — actual varies by file size and model)
+```
+
+**Auth errors pause, not crash** — if an API key expires mid-run, the run pauses with the checkpoint saved. Fix the key with `codilay keys`, then resume exactly where it stopped.
+
+**Error panel at end of run** — every skip, warning, and failure is collected during the run and displayed in a structured panel when it completes:
+```
+┌─ Run Issues — 1 warning  2 skipped ────────────────────────┐
+│  WARNING  src/services/payment.py                          │
+│    What:   Failed to process                               │
+│    Why:    LLM returned empty response after 3 retries     │
+│    Action: File parked — run continued without it          │
+└────────────────────────────────────────────────────────────┘
+```
+
 ### 🛡️ System Audits (Architecture & Security)
 Run AI-powered audits against your architecture, security, performance, and code quality. Passive mode uses existing context (fast), while active mode deeply inspects files (thorough). 
 
@@ -422,12 +460,12 @@ Audits can be managed and viewed from the **CLI**, the **Interactive Menu**, or 
 | `codilay .` | Document the current directory (incremental) |
 | `codilay chat .` | Start a **Chat session** about the project |
 | `codilay serve .` | Launch the **Web UI** |
-| `codilay status .` | Show documentation coverage and stale sections |
+| `codilay status .` | Health dashboard — age, staleness badge, changed files, next steps |
 | `codilay diff .` | See what changed in files since the last run |
 | `codilay diff-run .` | **Document changes only** (since commit/tag/date/branch) |
 | `codilay setup` | Configure default provider, model, and API keys |
 | `codilay keys` | Manage stored API keys |
-| `codilay clean .` | Wipe all generated artifacts |
+| `codilay clean .` | Remove state + docs (preserves chat history; use `--all` to remove everything) |
 | `codilay watch .` | Watch for file changes, auto-update docs |
 | `codilay export .` | Export docs (Interactive, Query, or Preset modes) |
 | `codilay diff-doc .` | Show section-level documentation diff between runs |
@@ -527,6 +565,9 @@ src/codilay/
 ├── wire_manager.py     # Linkage & Dependency resolution
 ├── docstore.py         # Living CODEBASE.md management
 ├── chatstore.py        # Persistent memory & Chat history
+├── state.py            # AgentState with atomic saves & 3-backup rotation
+├── error_tracker.py    # Run-scoped error collector (CRITICAL/WARNING/SKIPPED/INFO)
+├── pricing.py          # Model pricing registry for cost estimation & display
 ├── server.py           # FastAPI Intelligence Server (Web UI + API)
 ├── watcher.py          # File system watcher (watch mode)
 ├── exporter.py         # AI-friendly doc export (markdown/xml/json)

@@ -222,12 +222,34 @@ def _menu_document(settings: Settings) -> Optional[dict]:
         _pause()
         return None
 
-    console.print(f"\n[bold]Target:[/bold] {target}")
-    console.print(f"[bold]Provider:[/bold] {settings.default_provider}")
-    console.print(f"[bold]Model:[/bold] {settings.get_effective_model()}")
-    console.print()
+    console.print(f"\n[bold]Target:[/bold]   {target}")
+    console.print(f"[bold]Provider:[/bold]  {settings.default_provider}")
+    console.print(f"[bold]Model:[/bold]     {settings.get_effective_model()}")
 
-    if Confirm.ask("Start documentation?", default=True):
+    # ── Peek at existing state so the confirmation is informative ──
+    incomplete_run = _check_incomplete_run(target, settings)
+    if incomplete_run:
+        processed = incomplete_run["processed"]
+        remaining = incomplete_run["remaining"]
+        console.print()
+        console.print(
+            Panel(
+                f"[bold orange3]Incomplete run detected for this project.[/bold orange3]\n\n"
+                f"  • Documented: [green]{processed}[/green] files\n"
+                f"  • Remaining:  [yellow]{remaining}[/yellow] files\n\n"
+                "You will be asked whether to [bold]resume[/bold] or [bold]start fresh[/bold]\n"
+                "after confirming below.",
+                border_style="orange3",
+                title="[bold orange3]Previous Run Found[/bold orange3]",
+                padding=(0, 2),
+            )
+        )
+        prompt_text = "Continue?"
+    else:
+        console.print()
+        prompt_text = "Start documentation?"
+
+    if Confirm.ask(prompt_text, default=True):
         return {
             "action": "run",
             "target": target,
@@ -236,6 +258,42 @@ def _menu_document(settings: Settings) -> Optional[dict]:
             "base_url": settings.custom_base_url,
             "verbose": settings.verbose,
         }
+
+    return None
+
+
+def _check_incomplete_run(target: str, settings: Settings) -> Optional[dict]:
+    """
+    Check if there is an incomplete run for the given target.
+
+    Returns a dict with 'processed' and 'remaining' counts if an incomplete
+    run exists, or None if there is no state or the run was complete.
+    """
+    import json
+
+    # Mirror the output_dir logic from cli.run
+    if settings.doc_output_location == "docs":
+        output_dir = os.path.join(target, "docs")
+    else:
+        output_dir = os.path.join(target, "codilay")
+
+    state_path = os.path.join(output_dir, ".codilay_state.json")
+    codebase_md = os.path.join(output_dir, "CODEBASE.md")
+
+    if not os.path.exists(state_path):
+        return None
+
+    try:
+        with open(state_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        queue = data.get("queue", [])
+        processed = data.get("processed", [])
+        # Only flag as incomplete if there are files still queued OR
+        # the CODEBASE.md hasn't been written yet
+        if queue or not os.path.exists(codebase_md):
+            return {"processed": len(processed), "remaining": len(queue)}
+    except Exception:
+        pass
 
     return None
 
@@ -481,7 +539,11 @@ def _menu_provider_model(settings: Settings):
 
     for i, prov in enumerate(providers, 1):
         meta = PROVIDER_META[prov]
-        default_m = DEFAULT_MODELS.get(prov, "—")
+        if prov == settings.default_provider:
+            # Show the actual selected model, not just the hardcoded default
+            default_m = settings.get_effective_model(prov) or DEFAULT_MODELS.get(prov, "—")
+        else:
+            default_m = DEFAULT_MODELS.get(prov, "—")
         configured = settings.has_provider_configured(prov)
         status = "[green]✓ Ready[/green]" if configured else "[red]✗ Key needed[/red]"
         marker = "  [bold yellow]← current[/bold yellow]" if prov == settings.default_provider else ""
@@ -613,6 +675,7 @@ def _menu_preferences(settings: Settings):
         menu.add_row("[5]", "👁   Watch Mode — debounce, auto-open UI, extensions")
         menu.add_row("[6]", "📤  Export Defaults — format, token budget")
         menu.add_row("[7]", "🌐  Web UI — port, auto-open browser")
+        menu.add_row("[8]", "✍️   Annotate — model, git safety, level defaults")
         menu.add_row("[0]", "← Back to main menu")
 
         console.print(menu)
@@ -620,7 +683,7 @@ def _menu_preferences(settings: Settings):
 
         choice = Prompt.ask(
             "Which section?",
-            choices=["0", "1", "2", "3", "4", "5", "6", "7"],
+            choices=["0", "1", "2", "3", "4", "5", "6", "7", "8"],
             default="0",
         )
 
@@ -640,6 +703,8 @@ def _menu_preferences(settings: Settings):
             _prefs_export(settings)
         elif choice == "7":
             _prefs_web_ui(settings)
+        elif choice == "8":
+            _prefs_annotate(settings)
 
 
 # ── Preferences sub-sections ─────────────────────────────────────────────────
@@ -1113,6 +1178,77 @@ def _prefs_web_ui(settings: Settings):
             _pause()
 
 
+def _prefs_annotate(settings: Settings):
+    """Annotate preferences."""
+    while True:
+        _clear()
+        _header("Preferences · Annotate")
+
+        model_display = settings.annotate_model or "[dim]none (uses global default)[/dim]"
+        use_config_display = "[green]yes[/green]" if settings.annotate_use_config_model else "[dim]no[/dim]"
+        git_clean_display = "Yes" if settings.annotate_require_git_clean else "No"
+        dry_run_display = "Yes" if settings.annotate_require_dry_run_first else "No"
+
+        console.print("[bold]Current settings:[/bold]\n")
+        console.print(f"  [bold cyan][1][/bold cyan] Annotate model:          [bold]{model_display}[/bold]")
+        console.print(
+            f"  [bold cyan][2][/bold cyan] Use project config model: {use_config_display}"
+            " [dim](if no annotate model set)[/dim]"
+        )
+        console.print(f"  [bold cyan][3][/bold cyan] Default level:           [bold]{settings.annotate_level}[/bold]")
+        console.print(f"  [bold cyan][4][/bold cyan] Require git clean:        [bold]{git_clean_display}[/bold]")
+        console.print(f"  [bold cyan][5][/bold cyan] Require dry-run first:    [bold]{dry_run_display}[/bold]")
+        console.print()
+        console.print("  [bold cyan][0][/bold cyan] ← Back")
+        console.print()
+
+        choice = Prompt.ask("Which setting?", choices=["0", "1", "2", "3", "4", "5"], default="0")
+
+        if choice == "0":
+            return
+
+        elif choice == "1":
+            console.print(
+                "\n[dim]Set a dedicated model for annotate (e.g. claude-opus-4-6, gpt-4o).\n"
+                "Leave blank to clear and fall back to global default.[/dim]\n"
+            )
+            raw = Prompt.ask(
+                f"  Annotate model [dim](currently: {settings.annotate_model or 'none'}, 0 to cancel)[/dim]",
+                default=settings.annotate_model or "",
+            )
+            if _is_back(raw):
+                continue
+            settings.annotate_model = raw.strip() or None
+            settings.save()
+            display = settings.annotate_model or "cleared (uses global default)"
+            console.print(f"\n[green]✓[/green] Annotate model: [bold]{display}[/bold]")
+            _pause()
+
+        elif choice == "2":
+            settings.annotate_use_config_model = not settings.annotate_use_config_model
+            settings.save()
+            state = "ON" if settings.annotate_use_config_model else "OFF"
+            console.print(f"\n[green]✓[/green] Use project config model: [bold]{state}[/bold]")
+            _pause()
+
+        elif choice == "3":
+            _cycle_setting(settings, "annotate_level", ["docstrings", "inline", "full"], "Default annotate level")
+
+        elif choice == "4":
+            settings.annotate_require_git_clean = not settings.annotate_require_git_clean
+            settings.save()
+            state = "ON" if settings.annotate_require_git_clean else "OFF"
+            console.print(f"\n[green]✓[/green] Require git clean: [bold]{state}[/bold]")
+            _pause()
+
+        elif choice == "5":
+            settings.annotate_require_dry_run_first = not settings.annotate_require_dry_run_first
+            settings.save()
+            state = "ON" if settings.annotate_require_dry_run_first else "OFF"
+            console.print(f"\n[green]✓[/green] Require dry-run first: [bold]{state}[/bold]")
+            _pause()
+
+
 def _cycle_setting(settings: Settings, attr: str, options: list, label: str):
     """Cycle through a list of options for a settings attribute."""
     current = getattr(settings, attr, options[0])
@@ -1346,6 +1482,7 @@ def _menu_tools(settings: Settings) -> Optional[dict]:
         menu.add_row("[8]", "🧠  Team memory — shared facts & decisions")
         menu.add_row("[9]", "📊  Triage feedback — improve triage accuracy")
         menu.add_row("[10]", "🛡️   Audit system — security, performance, architecture")
+        menu.add_row("[11]", "✍️   Annotate — add AI-generated docstrings & comments")
         menu.add_row("[0]", "← Back to main menu")
 
         console.print(menu)
@@ -1353,7 +1490,7 @@ def _menu_tools(settings: Settings) -> Optional[dict]:
 
         choice = Prompt.ask(
             "[bold cyan]Select a tool[/bold cyan]",
-            choices=["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
+            choices=["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"],
             default="0",
         )
 
@@ -1409,6 +1546,88 @@ def _menu_tools(settings: Settings) -> Optional[dict]:
             result = _menu_tool_audit(settings)
             if result:
                 return result
+
+        elif choice == "11":
+            result = _menu_tool_annotate(settings)
+            if result:
+                return result
+
+
+def _menu_tool_annotate(settings: Settings) -> Optional[dict]:
+    """Launch the code annotator with a run-config screen."""
+    _clear()
+    _header("Code Annotate")
+    _back_hint()
+
+    target = _prompt_target_path()
+    if not target:
+        return None
+
+    # Per-run overrides — start from preference defaults
+    run_level: str = settings.annotate_level
+    run_dry_run: bool = False  # apply by default; user can toggle to preview first
+    run_model: Optional[str] = settings.annotate_model  # None = use global default
+    run_use_config_model: bool = settings.annotate_use_config_model
+
+    while True:
+        _clear()
+        _header("Code Annotate · Run Configuration")
+        console.print("[dim]Values loaded from Preferences — change any before running.[/dim]\n")
+
+        model_display = run_model or "[dim]global default[/dim]"
+        use_cfg_display = "[green]yes[/green]" if run_use_config_model else "[dim]no[/dim]"
+
+        opts = Table(show_header=False, box=None, padding=(0, 2))
+        opts.add_column("key", style="bold cyan", width=6, justify="right")
+        opts.add_column("label", width=26)
+        opts.add_column("value", style="bold")
+
+        opts.add_row("[1]", "Annotation level", run_level)
+        opts.add_row("[2]", "Dry-run (preview only)", "yes" if run_dry_run else "[green]no — apply changes[/green]")
+        opts.add_row("[3]", "Model override", model_display)
+        opts.add_row("[4]", "Use project config model", use_cfg_display)
+        opts.add_row("", "", "")
+        opts.add_row("[R]", "Run annotate", f"[green]→ {target}[/green]")
+        opts.add_row("[0]", "Back", "")
+
+        console.print(opts)
+        console.print()
+
+        choice = Prompt.ask(
+            "Select to override or [bold green]R[/bold green] to run",
+            choices=["0", "1", "2", "3", "4", "r", "R"],
+            default="R",
+        ).lower()
+
+        if choice == "0":
+            return None
+
+        elif choice == "1":
+            lvl = Prompt.ask("Annotation level", choices=["docstrings", "inline", "full"], default=run_level)
+            if not _is_back(lvl):
+                run_level = lvl
+
+        elif choice == "2":
+            run_dry_run = not run_dry_run
+
+        elif choice == "3":
+            console.print("[dim]Enter a model ID to override (blank = use global default, 0 to cancel)[/dim]")
+            raw = Prompt.ask("Model", default=run_model or "")
+            if not _is_back(raw):
+                run_model = raw.strip() or None
+
+        elif choice == "4":
+            run_use_config_model = not run_use_config_model
+
+        elif choice == "r":
+            return {
+                "action": "annotate",
+                "target": target,
+                "level": run_level,
+                "dry_run": run_dry_run,
+                "model": run_model,
+                "use_config_model": run_use_config_model,
+            }
 
 
 def _prompt_target_path(label: str = "Path to codebase") -> Optional[str]:

@@ -46,10 +46,12 @@ from rich.table import Table
 
 from codilay.config import CodiLayConfig
 from codilay.docstore import DocStore
+from codilay.error_tracker import ErrorTracker
 from codilay.git_tracker import ChangeType, GitTracker
-from codilay.llm_client import ALL_PROVIDERS, LLMClient
+from codilay.llm_client import ALL_PROVIDERS, AuthenticationError, LLMClient
 from codilay.parallel_orchestrator import ParallelOrchestrator
 from codilay.planner import Planner
+from codilay.pricing import format_cost
 from codilay.processor import Processor
 from codilay.scanner import Scanner
 from codilay.settings import Settings
@@ -195,6 +197,9 @@ def run(ctx, target, scope):
     ui = UI(console, verbose)
     ui.show_banner()
 
+    # ── Error tracker for this run ────────────────────────────────
+    error_tracker = ErrorTracker()
+
     # ── Load Config ──────────────────────────────────────────────
     cfg = CodiLayConfig.load(target, config_path)
 
@@ -250,7 +255,64 @@ def run(ctx, target, scope):
 
     state_path = os.path.join(output_dir, ".codilay_state.json")
     codebase_md_path = os.path.join(output_dir, "CODEBASE.md")
+    lock_path = os.path.join(output_dir, ".codilay.lock")
     os.makedirs(output_dir, exist_ok=True)
+
+    # ── Concurrent-run prevention ─────────────────────────────────
+    if os.path.exists(lock_path):
+        try:
+            with open(lock_path, "r") as lf:
+                lock_pid = lf.read().strip()
+        except OSError:
+            lock_pid = "unknown"
+        # Check if the PID is still alive before blocking
+        lock_alive = False
+        try:
+            if lock_pid.isdigit():
+                import signal
+
+                os.kill(int(lock_pid), 0)
+                lock_alive = True
+        except (OSError, ProcessLookupError):
+            pass
+
+        if lock_alive:
+            console.print(
+                Panel(
+                    f"[bold red]Another CodiLay run is already in progress for this project.[/bold red]\n\n"
+                    f"PID: [cyan]{lock_pid}[/cyan]\n"
+                    f"Lock file: [dim]{lock_path}[/dim]\n\n"
+                    "Wait for the other run to finish, or if it crashed, delete the lock file:\n"
+                    f"  [dim]rm {lock_path}[/dim]",
+                    title="[bold red]Concurrent Run Blocked[/bold red]",
+                    border_style="red",
+                )
+            )
+            return
+        else:
+            # Stale lock from a crashed run — remove it
+            try:
+                os.remove(lock_path)
+                ui.warn("Removed stale lock file from a previous crashed run.")
+            except OSError:
+                pass
+
+    # Write our own lock file and register cleanup on exit
+    import atexit
+
+    def _remove_lock():
+        try:
+            if os.path.exists(lock_path):
+                os.remove(lock_path)
+        except OSError:
+            pass
+
+    try:
+        with open(lock_path, "w") as lf:
+            lf.write(str(os.getpid()))
+        atexit.register(_remove_lock)
+    except OSError as e:
+        ui.warn(f"Could not create lock file: {e} — concurrent run protection disabled")
 
     # ── Git setup ────────────────────────────────────────────────
     git = GitTracker(target)
@@ -619,6 +681,9 @@ def run(ctx, target, scope):
         ui.phase("Phase 2 · Resuming — Skipping planning")
         ui.show_plan(state.queue, state.parked, {})
 
+    # ── Pre-run cost estimate ─────────────────────────────────────
+    _show_cost_estimate(state.queue, llm, cfg, ui)
+
     # ── Phase 3: Processing Loop ─────────────────────────────────
     ui.phase("Phase 3 · Processing — Reading files and building docs")
 
@@ -717,6 +782,12 @@ def run(ctx, target, scope):
 
                 if not os.path.exists(full_path):
                     ui.warn(f"File not found, skipping: {file_path}")
+                    error_tracker.skipped(
+                        what=f"File not found: {file_path}",
+                        why="File was deleted or moved after scan",
+                        action="Skipped — run will continue",
+                        file=file_path,
+                    )
                     progress.advance(task)
                     continue
 
@@ -725,7 +796,22 @@ def run(ctx, target, scope):
                 try:
                     content = scanner.read_file(full_path)
                     if content is None:
-                        ui.warn(f"Could not read (binary?): {file_path}")
+                        # Try to distinguish binary vs permission error
+                        try:
+                            with open(full_path, "rb") as _f:
+                                _f.read(16)
+                            why = "File appears to be binary"
+                        except PermissionError:
+                            why = "Permission denied"
+                        except OSError as _oe:
+                            why = str(_oe)
+                        ui.warn(f"Could not read: {file_path}")
+                        error_tracker.skipped(
+                            what=f"Could not read: {file_path}",
+                            why=why,
+                            action="File skipped — run will continue",
+                            file=file_path,
+                        )
                         progress.advance(task)
                         continue
 
@@ -758,10 +844,44 @@ def run(ctx, target, scope):
                     state.section_contents = docstore.get_section_contents()
                     state.save(state_path)
 
+                except AuthenticationError as e:
+                    # Auth errors require user action — pause with a clear message
+                    console.print(
+                        Panel(
+                            f"[bold red]API authentication failed.[/bold red]\n\n"
+                            f"{e}\n\n"
+                            "Progress has been saved. Fix your API key and resume:\n"
+                            "  [cyan]codilay keys set[/cyan]\n"
+                            "  [cyan]codilay .[/cyan]  (will offer to resume)",
+                            title="[bold red]Authentication Error — Run Paused[/bold red]",
+                            border_style="red",
+                        )
+                    )
+                    error_tracker.critical(
+                        what="API authentication failed",
+                        why=str(e),
+                        action="Run paused — fix key with `codilay keys set` then resume",
+                    )
+                    state.open_wires = wire_mgr.get_open_wires()
+                    state.closed_wires = wire_mgr.get_closed_wires()
+                    state.section_index = docstore.get_section_index()
+                    state.section_contents = docstore.get_section_contents()
+                    state.save(state_path)
+                    break  # Stop processing — state is saved for resume
+
                 except Exception as e:
                     ui.error(f"Error processing {file_path}: {e}")
                     if verbose:
                         console.print_exception()
+                    error_tracker.warning(
+                        what=f"Failed to process {file_path}",
+                        why=str(e),
+                        action="File parked — run continued without it",
+                        file=file_path,
+                    )
+                    if file_path not in state.parked:
+                        state.parked.append(file_path)
+                        state.park_reasons[file_path] = str(e)
 
                 progress.advance(task)
 
@@ -810,14 +930,49 @@ def run(ctx, target, scope):
         current_commit,
         current_commit_short,
         out_of_scope_files=state_out_of_scope,
+        error_tracker=error_tracker,
     )
 
     # Show LLM usage
     stats = llm.get_usage_stats()
+    cost = stats.get("estimated_cost_usd", 0.0)
+    cost_str = f"  estimated cost: {format_cost(cost)}" if cost > 0 else ""
     ui.info(
         f"LLM usage: {stats['total_calls']} calls, "
         f"{stats['total_input_tokens']:,} input tokens, "
-        f"{stats['total_output_tokens']:,} output tokens"
+        f"{stats['total_output_tokens']:,} output tokens{cost_str}"
+    )
+
+
+def _show_cost_estimate(queue: list, llm, cfg, ui) -> None:
+    """Show a rough cost estimate for the queued files before processing starts.
+
+    Uses average token assumptions (500 input + 200 output per file).  The
+    real cost can be higher for large files or lower when many files are
+    skipped/parked, but this gives the user an order-of-magnitude preview.
+    """
+    from codilay.pricing import estimate_cost, format_cost
+
+    n = len(queue)
+    if n == 0:
+        return
+
+    # Heuristic: ~500 input tokens + ~200 output tokens per file on average.
+    # Input includes the file content + accumulated doc context; output is the
+    # new section JSON.  These are conservative estimates.
+    est_input = n * 500
+    est_output = n * 200
+
+    cost = estimate_cost(llm.model, est_input, est_output)
+    if cost <= 0:
+        # Model not in pricing table — skip the estimate silently
+        return
+
+    # Build a one-liner hint so it doesn't interrupt the flow
+    ui.info(
+        f"Estimated cost for {n} file{'s' if n != 1 else ''}: "
+        f"[bold]{format_cost(cost)}[/bold]  "
+        f"[dim](rough — actual varies by file size and model)[/dim]"
     )
 
 
@@ -837,6 +992,7 @@ def _finalize_and_write(
     current_commit,
     current_commit_short,
     out_of_scope_files=None,
+    error_tracker=None,
 ):
     """Finalize documentation, write all output files, save state."""
     from codilay.processor import Processor
@@ -936,7 +1092,13 @@ def _finalize_and_write(
     except Exception:
         pass  # Non-critical — don't block the run
 
-    # ── Summary ──────────────────────────────────────────────────
+    # ── Error panel + summary ─────────────────────────────────────
+    if error_tracker is not None:
+        ui.show_error_panel(error_tracker)
+
+    stats = llm.get_usage_stats()
+    cost = stats.get("estimated_cost_usd", 0.0)
+
     ui.show_summary(
         processed_count=len(state.processed),
         wires_closed=len(closed_wires),
@@ -944,10 +1106,14 @@ def _finalize_and_write(
         sections=len(docstore.get_section_index()),
         output_path=codebase_md_path,
         links_path=links_path,
+        error_tracker=error_tracker,
+        cost_usd=cost,
     )
 
     if current_commit_short:
         ui.info(f"Documented at commit [cyan]{current_commit_short}[/cyan] — next run will diff from here")
+
+    ui.show_next_steps(codebase_md_path, target)
 
 
 # ─── Status command ───────────────────────────────────────────────────────────
@@ -957,83 +1123,145 @@ def _finalize_and_write(
 @click.argument("target", default=".", type=click.Path(exists=True))
 def status(target):
     """Show current CodiLay state for a project."""
+    import math
+    from datetime import timezone as _tz
+
     target = os.path.abspath(target)
     output_dir = os.path.join(target, "codilay")
     state_path = os.path.join(output_dir, ".codilay_state.json")
 
     if not os.path.exists(state_path):
-        console.print("[yellow]No CodiLay state found for this project.[/yellow]")
-        console.print(f"[dim]Looked in: {state_path}[/dim]")
+        console.print(
+            Panel(
+                "[yellow]No CodiLay documentation found for this project.[/yellow]\n\n"
+                "Get started:\n"
+                f"  [bold cyan]codilay {target}[/bold cyan]",
+                border_style="yellow",
+                title="[bold yellow]Not Documented[/bold yellow]",
+            )
+        )
         return
 
     state = AgentState.load(state_path)
 
-    table = Table(title="CodiLay Status", box=box.ROUNDED)
-    table.add_column("Metric", style="cyan")
-    table.add_column("Value", style="green")
-
-    table.add_row("Run ID", state.run_id)
-    table.add_row("Files processed", str(len(state.processed)))
-    table.add_row("Open wires", str(len(state.open_wires)))
-    table.add_row("Closed wires", str(len(state.closed_wires)))
-    table.add_row("Documentation sections", str(len(state.section_index)))
-    table.add_row("Queued (remaining)", str(len(state.queue)))
-    table.add_row("Parked", str(len(state.parked)))
-
-    # Git info
-    if state.last_commit_short:
-        table.add_row("Last documented commit", state.last_commit_short)
+    # ── Human-readable age ────────────────────────────────────────
+    age_str = "unknown"
+    age_days = None
     if state.last_run:
-        table.add_row("Last run", state.last_run)
+        try:
+            last_run_dt = datetime.fromisoformat(state.last_run.replace("Z", "+00:00"))
+            now = datetime.now(timezone.utc)
+            delta = now - last_run_dt
+            age_days = delta.days
+            hours = math.floor(delta.seconds / 3600)
+            if age_days == 0:
+                age_str = f"{hours}h ago" if hours > 0 else "just now"
+            elif age_days == 1:
+                age_str = "yesterday"
+            elif age_days < 7:
+                age_str = f"{age_days} days ago"
+            elif age_days < 30:
+                age_str = f"{age_days // 7} week{'s' if age_days >= 14 else ''} ago"
+            else:
+                age_str = f"{age_days // 30} month{'s' if age_days >= 60 else ''} ago"
+        except (ValueError, TypeError):
+            pass
 
-    console.print(table)
-
-    # Show git diff summary if available
+    # ── Staleness indicator ───────────────────────────────────────
     git = GitTracker(target)
+    diff_result = None
+    changes_count = 0
     if git.is_git_repo and state.last_commit:
         if git.is_commit_valid(state.last_commit):
             diff_result = git.get_full_diff(state.last_commit)
             if diff_result and diff_result.changes:
-                console.print(
-                    f"\n[bold yellow]⚠ {len(diff_result.changes)} changes "
-                    f"since last documented commit "
-                    f"({diff_result.commits_behind} commits behind):[/bold yellow]"
-                )
-                for line in diff_result.summary_lines[:20]:
-                    console.print(line)
-                if len(diff_result.changes) > 20:
-                    console.print(f"  [dim]… +{len(diff_result.changes) - 20} more[/dim]")
-                console.print("\n[dim]Run [bold]codilay .[/bold] to update documentation.[/dim]")
-            elif diff_result:
-                console.print("\n[green]✓ Documentation is up to date with HEAD.[/green]")
-        else:
+                changes_count = len(diff_result.changes)
+
+    incomplete = bool(state.queue)
+
+    if incomplete:
+        health_badge = "[bold orange3]⚠  INCOMPLETE RUN[/bold orange3]"
+        health_hint = f"{len(state.queue)} files still queued — resume with [bold cyan]codilay {target}[/bold cyan]"
+    elif changes_count > 50:
+        health_badge = "[bold red]✗  STALE[/bold red]"
+        health_hint = f"{changes_count} file changes since last run — docs are significantly out of date"
+    elif changes_count > 10:
+        health_badge = "[bold yellow]~  DRIFTED[/bold yellow]"
+        health_hint = f"{changes_count} file changes since last run"
+    elif changes_count > 0:
+        health_badge = "[bold dim]○  MINOR DRIFT[/bold dim]"
+        health_hint = f"{changes_count} file change{'s' if changes_count != 1 else ''} since last run"
+    else:
+        health_badge = "[bold green]✓  UP TO DATE[/bold green]"
+        health_hint = "Documentation matches HEAD"
+
+    # ── Main status table ─────────────────────────────────────────
+    table = Table(title="CodiLay Status", box=box.ROUNDED)
+    table.add_column("Metric", style="cyan")
+    table.add_column("Value", style="bold white")
+
+    table.add_row("Health", health_badge)
+    table.add_row("Last documented", f"{age_str}  [dim]({state.last_run[:19] if state.last_run else '—'})[/dim]")
+    table.add_row("Files documented", str(len(state.processed)))
+    table.add_row("Doc sections", str(len(state.section_index)))
+    table.add_row(
+        "Wires",
+        f"[green]{len(state.closed_wires)} closed[/green]  [dim]·[/dim]  [yellow]{len(state.open_wires)} open[/yellow]",
+    )
+    if state.parked:
+        table.add_row(
+            "Parked files", f"[yellow]{len(state.parked)}[/yellow]  [dim](skipped — retry with context)[/dim]"
+        )
+    if state.last_commit_short:
+        table.add_row("Documented at commit", f"[cyan]{state.last_commit_short}[/cyan]")
+
+    console.print(table)
+    console.print(f"  {health_hint}")
+
+    # ── Git change summary ────────────────────────────────────────
+    if diff_result and diff_result.changes:
+        console.print()
+        console.print(
+            f"  [bold yellow]{changes_count} file{'s' if changes_count != 1 else ''} changed[/bold yellow]"
+            f"  [dim]({diff_result.commits_behind} commit{'s' if diff_result.commits_behind != 1 else ''} behind HEAD)[/dim]"
+        )
+        for line in diff_result.summary_lines[:15]:
+            console.print(line)
+        if changes_count > 15:
             console.print(
-                f"\n[yellow]⚠ Last documented commit "
-                f"{state.last_commit_short} no longer exists "
-                f"(rebase/force push?).[/yellow]"
+                f"  [dim]… +{changes_count - 15} more — run [bold]codilay diff {target}[/bold] for full list[/dim]"
+            )
+    elif diff_result and not diff_result.changes and not incomplete:
+        console.print(
+            f"\n  [green]✓[/green]  No changes since last documented commit [cyan]{state.last_commit_short}[/cyan]"
+        )
+
+    # ── Open wires (actionable view) ─────────────────────────────
+    if state.open_wires:
+        console.print()
+        console.print(f"  [bold]Open wires[/bold] [dim]({len(state.open_wires)} unresolved references):[/dim]")
+        for w in state.open_wires[:10]:
+            deleted = "[DELETED]" in w.get("context", "")
+            suffix = "  [red](target file deleted)[/red]" if deleted else ""
+            console.print(
+                f"    [yellow]→[/yellow]  [dim]{w['from']}[/dim] [yellow]→[/yellow] "
+                f"[bold]{w['to']}[/bold]  [dim]({w['type']})[/dim]{suffix}"
+            )
+        if len(state.open_wires) > 10:
+            console.print(
+                f"    [dim]… +{len(state.open_wires) - 10} more"
+                f" — open wires resolve when the referenced files are documented[/dim]"
             )
 
-    if state.open_wires:
-        console.print("\n[bold]Open wires:[/bold]")
-        for w in state.open_wires[:15]:
-            ctx = ""
-            if "[DELETED]" in w.get("context", ""):
-                ctx = " [red](file deleted)[/red]"
-            console.print(f"  [yellow]→[/yellow] {w['from']} → {w['to']} [dim]({w['type']})[/dim]{ctx}")
-        if len(state.open_wires) > 15:
-            console.print(f"  [dim]  … +{len(state.open_wires) - 15} more[/dim]")
-
-    # ── Feature status ────────────────────────────────────────────────────────
+    # ── Feature status ────────────────────────────────────────────
     feature_rows = []
 
-    # Doc snapshots count
     snapshots_dir = os.path.join(output_dir, "doc_snapshots")
     if os.path.isdir(snapshots_dir):
         snapshot_count = len([f for f in os.listdir(snapshots_dir) if f.endswith(".json")])
         if snapshot_count > 0:
             feature_rows.append(("Doc snapshots", str(snapshot_count)))
 
-    # Triage feedback count
     feedback_path = os.path.join(output_dir, "triage_feedback.json")
     if os.path.exists(feedback_path):
         try:
@@ -1045,7 +1273,6 @@ def status(target):
         except (json.JSONDecodeError, KeyError):
             pass
 
-    # Team memory stats
     team_path = os.path.join(output_dir, "team_memory.json")
     if os.path.exists(team_path):
         try:
@@ -1060,7 +1287,6 @@ def status(target):
         except (json.JSONDecodeError, KeyError):
             pass
 
-    # Search index status
     search_index_path = os.path.join(output_dir, "search_index.json")
     if os.path.exists(search_index_path):
         try:
@@ -1072,7 +1298,6 @@ def status(target):
         except (json.JSONDecodeError, KeyError):
             pass
 
-    # Schedule status
     schedule_path = os.path.join(output_dir, "schedule.json")
     if os.path.exists(schedule_path):
         try:
@@ -1081,12 +1306,9 @@ def status(target):
             if sched_data.get("enabled"):
                 cron_expr = sched_data.get("cron_expression", "unknown")
                 feature_rows.append(("Active schedule", f"cron: {cron_expr}"))
-            else:
-                feature_rows.append(("Schedule", "disabled"))
         except (json.JSONDecodeError, KeyError):
             pass
 
-    # Chat conversations count
     chat_dir = os.path.join(output_dir, "chat")
     if os.path.isdir(chat_dir):
         conv_count = len([f for f in os.listdir(chat_dir) if f.endswith(".json")])
@@ -1097,10 +1319,32 @@ def status(target):
         console.print()
         feat_table = Table(title="Features", box=box.ROUNDED)
         feat_table.add_column("Feature", style="cyan")
-        feat_table.add_column("Status", style="green")
+        feat_table.add_column("Status", style="bold white")
         for name, value in feature_rows:
             feat_table.add_row(name, value)
         console.print(feat_table)
+
+    # ── Next steps ────────────────────────────────────────────────
+    console.print()
+    next_steps = []
+    if incomplete:
+        next_steps.append(
+            f"[bold cyan]codilay {target}[/bold cyan]  — resume incomplete run ({len(state.queue)} files left)"
+        )
+    elif changes_count > 0:
+        next_steps.append(f"[bold cyan]codilay {target}[/bold cyan]  — update docs ({changes_count} changed files)")
+    else:
+        next_steps.append(f"[bold cyan]codilay serve {target}[/bold cyan]  — browse documentation")
+        next_steps.append(f"[bold cyan]codilay chat {target}[/bold cyan]   — ask questions about the code")
+
+    console.print(
+        Panel(
+            "\n".join(f"  {s}" for s in next_steps),
+            title="[bold]Next steps[/bold]",
+            border_style="cyan",
+            padding=(0, 1),
+        )
+    )
 
 
 # ─── Diff command (new — show what would change) ─────────────────────────────
@@ -1235,29 +1479,109 @@ def diff(target):
 @cli.command()
 @click.argument("target", default=".", type=click.Path(exists=True))
 @click.option("--yes", "-y", is_flag=True, help="Skip confirmation")
-def clean(target, yes):
-    """Remove all CodiLay generated files."""
+@click.option("--all", "clean_all", is_flag=True, help="Also remove chat history and audit reports")
+def clean(target, yes, clean_all):
+    """Remove CodiLay generated files.
+
+    By default removes: state, CODEBASE.md, links.  Chat history and audit
+    reports are preserved unless --all is passed.
+    """
     target = os.path.abspath(target)
     output_dir = os.path.join(target, "codilay")
 
-    files_to_remove = []
-    for fname in [
+    def _file_size_str(path: str) -> str:
+        try:
+            size = os.path.getsize(path)
+            if size < 1024:
+                return f"{size} B"
+            if size < 1024 * 1024:
+                return f"{size / 1024:.1f} KB"
+            return f"{size / 1024 / 1024:.1f} MB"
+        except OSError:
+            return "?"
+
+    # Core generated files
+    core_candidates = [
         ".codilay_state.json",
+        ".codilay_state.json.bak.1",
+        ".codilay_state.json.bak.2",
+        ".codilay_state.json.bak.3",
+        ".codilay.lock",
         "CODEBASE.md",
         "CODEBASE.md.bak",
         "links.json",
-    ]:
+    ]
+
+    files_to_remove = []
+    total_bytes = 0
+    for fname in core_candidates:
         path = os.path.join(output_dir, fname)
         if os.path.exists(path):
-            files_to_remove.append((fname, path))
+            size = os.path.getsize(path) if os.path.exists(path) else 0
+            total_bytes += size
+            files_to_remove.append((fname, path, _file_size_str(path)))
 
-    if not files_to_remove:
+    if not files_to_remove and not clean_all:
         console.print("[yellow]Nothing to clean.[/yellow]")
         return
 
+    # Chat history + audits (preserved by default)
+    chat_dir = os.path.join(output_dir, "chat")
+    chat_count = 0
+    chat_bytes = 0
+    if os.path.isdir(chat_dir):
+        for f in os.listdir(chat_dir):
+            fp = os.path.join(chat_dir, f)
+            if os.path.isfile(fp):
+                chat_count += 1
+                chat_bytes += os.path.getsize(fp)
+
+    audits_dir = os.path.join(output_dir, "audits")
+    audit_count = 0
+    audit_bytes = 0
+    if os.path.isdir(audits_dir):
+        for f in os.listdir(audits_dir):
+            fp = os.path.join(audits_dir, f)
+            if os.path.isfile(fp):
+                audit_count += 1
+                audit_bytes += os.path.getsize(fp)
+
+    # Build display
     console.print("[bold]Files to remove:[/bold]")
-    for fname, path in files_to_remove:
-        console.print(f"  [red]✗[/red] {path}")
+    for fname, path, size_str in files_to_remove:
+        is_backup = ".bak." in fname
+        style = "dim red" if is_backup else "red"
+        label = "  (state backup)" if is_backup else ""
+        console.print(f"  [{style}]✗[/{style}] {fname}  [dim]{size_str}[/dim]{label}")
+
+    if total_bytes > 0:
+        if total_bytes < 1024 * 1024:
+            total_str = f"{total_bytes / 1024:.1f} KB"
+        else:
+            total_str = f"{total_bytes / 1024 / 1024:.1f} MB"
+        console.print(f"\n  Total to free: [bold]{total_str}[/bold]")
+
+    # Warn about preserved items
+    preserved = []
+    if chat_count > 0 and not clean_all:
+        chat_sz = f"{chat_bytes / 1024:.0f} KB"
+        preserved.append(
+            f"  [dim]Chat history: {chat_count} conversation{'s' if chat_count != 1 else ''} ({chat_sz}) — "
+            f"preserved (use [bold]--all[/bold] to remove)[/dim]"
+        )
+    if audit_count > 0 and not clean_all:
+        audit_sz = f"{audit_bytes / 1024:.0f} KB"
+        preserved.append(
+            f"  [dim]Audit reports: {audit_count} report{'s' if audit_count != 1 else ''} ({audit_sz}) — "
+            f"preserved (use [bold]--all[/bold] to remove)[/dim]"
+        )
+    if preserved:
+        console.print("\n[bold]Preserved (not deleted):[/bold]")
+        for p in preserved:
+            console.print(p)
+
+    if not files_to_remove and not clean_all:
+        return
 
     if not yes:
         confirm = click.confirm("\nProceed?", default=False)
@@ -1265,10 +1589,26 @@ def clean(target, yes):
             console.print("[dim]Cancelled.[/dim]")
             return
 
-    for fname, path in files_to_remove:
-        os.remove(path)
+    removed = 0
+    for fname, path, _ in files_to_remove:
+        try:
+            os.remove(path)
+            removed += 1
+        except OSError as e:
+            console.print(f"  [yellow]⚠[/yellow]  Could not remove {fname}: {e}")
 
-    console.print(f"[green]Removed {len(files_to_remove)} files.[/green]")
+    if clean_all:
+        import shutil
+
+        if os.path.isdir(chat_dir):
+            shutil.rmtree(chat_dir)
+            removed += chat_count
+        if os.path.isdir(audits_dir):
+            shutil.rmtree(audits_dir)
+            removed += audit_count
+
+    console.print(f"\n[green]✓[/green]  Removed {removed} file{'s' if removed != 1 else ''}.")
+    console.print(f"[dim]Run [bold]codilay {target}[/bold] to generate fresh documentation.[/dim]")
 
 
 # ─── Init command ─────────────────────────────────────────────────────────────
@@ -1515,6 +1855,21 @@ def interactive(ctx):
 
     elif result and result.get("action") == "audit":
         ctx.invoke(audit_command, target=result["target"], audit_type=result["type"], mode=result["mode"])
+
+    elif result and result.get("action") == "annotate":
+        settings.inject_env_vars()
+        # Per-run model/config-model overrides from the run-config screen
+        if result.get("model") is not None:
+            ctx.obj["model"] = result["model"]
+        if "use_config_model" in result:
+            # Temporarily patch settings for this invocation
+            settings.annotate_use_config_model = result["use_config_model"]
+        ctx.invoke(
+            annotate,
+            target=result["target"],
+            level=result.get("level", settings.annotate_level),
+            dry_run=result.get("dry_run", True),
+        )
 
 
 # ─── Setup wizard ─────────────────────────────────────────────────────────────
@@ -3652,7 +4007,15 @@ def annotate(ctx, target, scope, exclude, level, dry_run, rollback_id, no_git_ch
     if provider:
         cfg.llm_provider = provider
     if model_override:
+        # CLI flag always wins
         cfg.llm_model = model_override
+    elif settings.annotate_model:
+        # Dedicated annotate model in settings takes next priority
+        cfg.llm_model = settings.annotate_model
+    elif not settings.annotate_use_config_model:
+        # Config file model is suppressed — use the global default_model the user selected
+        cfg.llm_model = settings.default_model
+    # else: annotate_use_config_model=True → keep whatever CodiLayConfig loaded
     if base_url:
         cfg.llm_base_url = base_url
 
